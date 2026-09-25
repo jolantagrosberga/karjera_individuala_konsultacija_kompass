@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karjeras kompass</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --navy:#1F4E79; --blue:#2E74B5; --orange:#C75000; --orange-soft:#FBEBDD;
+  --ink:#1B2A3A; --muted:#5A6B7D; --line:#C9D6E3; --bg:#EDF2F7; --paper:#FFFFFF;
+  --blue-soft:#E3EDF7; --green:#2E7D32; --yellow:#D9A400; --red:#C62828;
+  --head:Candara,"Segoe UI",Calibri,sans-serif;
+  --body:Aptos,"Segoe UI",Calibri,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--body);color:var(--ink);background:var(--bg);font-size:16px;line-height:1.45;min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+h1,h2,h3{font-family:var(--head);color:var(--navy);margin:0;font-weight:700}
+a{color:var(--blue)}
+
+/* Galvene */
+.top{background:var(--navy);color:#fff;display:flex;align-items:center;gap:16px;padding:10px 20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{color:#fff;font-size:24px;letter-spacing:.2px}
+.brand small{display:block;font-size:13px;opacity:.8;font-family:var(--body)}
+.top .spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:999px;padding:6px 14px;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:#9AA8B6;flex:none}
+.dot.on{background:#5BD16A}.dot.wait{background:#F2B233}.dot.err{background:#FF6B6B}
+.codebox{font-family:var(--head);font-size:26px;letter-spacing:6px;background:#fff;color:var(--navy);padding:2px 14px;border-radius:6px;font-weight:700}
+.top .btn{border-color:rgba(255,255,255,.6);color:#fff;background:transparent}
+.top .btn:hover{background:rgba(255,255,255,.12)}
+
+/* Pogas */
+.btn{border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:600}
+.btn:hover{background:var(--blue-soft)}
+.btn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.primary:hover{background:#A94400}
+.btn.small{padding:4px 10px;font-size:14px;border-width:1.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.linkbtn{background:none;border:none;color:var(--blue);text-decoration:underline;cursor:pointer;padding:0}
+
+/* Sākuma ekrāns */
+#start{max-width:1100px;margin:40px auto;padding:0 20px}
+.start-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:24px}
+.panel h2{font-size:24px;margin-bottom:6px}
+.panel p{margin:0 0 14px;color:var(--muted)}
+.intro h2{font-size:34px}
+.intro p{font-size:18px;color:var(--muted);max-width:70ch;margin:8px 0 0}
+.codeinput{font-family:var(--head);font-size:30px;letter-spacing:8px;text-transform:uppercase;width:210px;text-align:center;padding:6px;border:2px solid var(--line);border-radius:8px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note{margin-top:24px;background:var(--orange-soft);border-left:5px solid var(--orange);padding:12px 16px;border-radius:6px;font-size:15px}
+.msg{min-height:22px;font-size:14px;color:var(--red);margin-top:8px}
+
+/* Darba laukums */
+#app{display:none;grid-template-columns:240px 1fr;min-height:calc(100vh - 60px)}
+.rail{background:var(--paper);border-right:1px solid var(--line);padding:18px 0}
+.rail ol{list-style:none;margin:0;padding:0;counter-reset:s}
+.rail li button{width:100%;text-align:left;background:none;border:none;border-left:5px solid transparent;padding:10px 16px;cursor:pointer;display:flex;gap:10px;align-items:center;font-size:15px}
+.rail li button::before{counter-increment:s;content:counter(s);width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted);flex:none}
+.rail li button:hover{background:var(--bg)}
+.rail li button.cur{border-left-color:var(--orange);background:var(--orange-soft);font-weight:700;color:var(--navy)}
+.rail li button.cur::before{border-color:var(--orange);background:var(--orange);color:#fff}
+.rail li button.done::before{border-color:var(--navy);color:var(--navy)}
+.rail .here{margin-left:auto;font-size:11px;background:var(--blue);color:#fff;border-radius:4px;padding:1px 6px}
+main{padding:24px 32px 32px;max-width:1400px}
+.stephead{display:flex;align-items:baseline;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.stephead h2{font-size:30px}
+.lead{color:var(--muted);margin:0 0 20px;max-width:80ch}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px}
+.card h3{font-size:19px;margin-bottom:10px}
+.card.accent{border-top:4px solid var(--orange)}
+.span2{grid-column:1 / -1}
+label.f{display:block;font-weight:600;margin:12px 0 4px;font-size:15px}
+label.f:first-child{margin-top:0}
+.opt{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+input[type=text],input[type=date],textarea{width:100%;border:1.5px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff}
+textarea{resize:vertical;min-height:64px}
+input:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(46,116,181,.2)}
+.hint{font-size:13px;color:var(--muted);margin-top:4px}
+.navbar{display:flex;justify-content:space-between;margin-top:24px}
+
+/* Čipi */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;cursor:pointer;font-size:14px}
+.chip:hover{border-color:var(--blue)}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip.full{opacity:.4}
+.chip .x{margin-left:6px;font-weight:700}
+.count{font-size:13px;color:var(--muted);margin-left:auto}
+.addrow{display:flex;gap:6px;margin-top:8px;width:100%}
+.addrow input{flex:1}
+.tag{background:var(--blue-soft);border:1px solid #BCD2E8;border-radius:999px;padding:3px 6px 3px 12px;font-size:14px;display:inline-flex;align-items:center;gap:4px}
+.tag button{border:none;background:none;cursor:pointer;color:var(--navy);font-weight:700;padding:0 6px}
+
+/* Segmenti, skala */
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:none;background:#fff;padding:6px 12px;cursor:pointer;font-size:14px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--navy);color:#fff}
+.scale{display:flex;gap:6px;flex-wrap:wrap}
+.scale button{width:40px;height:40px;border-radius:8px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:700}
+.scale button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.scale-ends{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);max-width:460px;margin-top:4px}
+
+/* Luksofors */
+.roles{display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
+.light{display:inline-flex;gap:6px;background:#2B3440;padding:5px 8px;border-radius:20px}
+.light button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;opacity:.28}
+.light button.g{background:var(--green)}.light button.y{background:var(--yellow)}.light button.r{background:var(--red)}
+.light button.on{opacity:1;border-color:#fff}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.legend .lg::before{background:var(--green)}.legend .ly::before{background:var(--yellow)}.legend .lr::before{background:var(--red)}
+
+/* Mācību priekšmeti */
+.subj{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px}
+.subjrow{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.subjrow .nm{flex:1;font-size:15px}
+.subjrow .seg button{padding:4px 8px;font-size:13px}
+.subjrow .seg button.on.p{background:var(--green)}
+.subjrow .seg button.on.n{background:var(--red)}
+.subjrow .seg button.on.x{background:var(--muted)}
+.star{border:none;background:none;cursor:pointer;font-size:20px;color:#C3CCD6;padding:0 2px}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+.itemrow{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.itemrow .nm{flex:1;font-size:15px}
+.itemrow .seg{flex:none}
+.itemrow .seg button{padding:5px 10px;font-size:13px}
+.itemrow .seg button.on.p,.itemrow .seg button.on.l{background:var(--green)}
+.itemrow .seg button.on.n,.itemrow .seg button.on.j{background:var(--red)}
+.itemrow .seg button.on.x,.itemrow .seg button.on.v{background:var(--muted)}
+.bar{height:10px;background:#DCE5EE;border-radius:5px;overflow:hidden;margin-top:3px}
+.bar span{display:block;height:100%;background:var(--blue)}
+.tipcard{border-left:5px solid var(--orange);background:#fff;border-radius:6px;padding:10px 14px;margin-bottom:10px}
+.tipcard h4{font-family:var(--head);color:var(--navy);margin:0 0 2px;font-size:17px}
+.prog{font-size:14px;color:var(--muted)}
+.star.on{color:var(--orange)}
+
+/* Konsultanta skats */
+.toolbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--blue-soft);border-radius:8px;padding:8px 14px;margin-bottom:16px;font-size:14px}
+.kgrid{display:grid;grid-template-columns:3fr 2fr;gap:20px;align-items:start}
+.ans dl{margin:0;display:grid;grid-template-columns:190px 1fr;gap:0}
+.ans dt{font-weight:600;color:var(--navy);padding:7px 10px 7px 0;border-bottom:1px solid #E4EBF2;font-size:14px}
+.ans dd{margin:0;padding:7px 0;border-bottom:1px solid #E4EBF2;font-size:15px}
+.empty{color:#A0ACB8}
+.v{display:inline-block;background:var(--blue-soft);border-radius:4px;padding:1px 8px;margin:1px 4px 1px 0;font-size:14px}
+.v.g{background:#DDEFDD}.v.y{background:#FFF1C7}.v.r{background:#F8DADA}
+.flash{animation:fl 1.2s ease-out}
+@keyframes fl{from{background:var(--orange-soft)}to{background:transparent}}
+.hints{background:var(--orange-soft);border-radius:8px;padding:10px 14px;font-size:14px;margin-bottom:12px}
+.hints ul{margin:6px 0 0;padding-left:18px}
+.checklist label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:15px}
+.checklist input[type=checkbox]{margin-top:4px;width:18px;height:18px;accent-color:var(--orange);flex:none}
+.checklist .addrow input[type=text]{width:auto;flex:1}
+.reco{border-top:4px solid var(--blue)}
+.reco h4{font-family:var(--head);color:var(--navy);margin:12px 0 4px;font-size:16px}
+.reco h4:first-child{margin-top:0}
+.reco ul{margin:0;padding-left:20px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.muted{color:var(--muted)}
+
+#print{display:none}
+@media (max-width:900px){
+  #app{grid-template-columns:1fr}
+  .rail{border-right:none;border-bottom:1px solid var(--line)}
+  .rail ol{display:flex;overflow-x:auto}
+  .rail li button{white-space:nowrap;border-left:none;border-bottom:4px solid transparent}
+  .start-grid,.grid2,.grid3,.kgrid,.subj{grid-template-columns:1fr}
+  main{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+
+/* Drukāšana */
+@media print{
+  body{display:block;overflow:visible;height:auto}
+  .top{display:none !important}
+  @page{size:A4 portrait;margin:13mm 14mm}
+  body{background:#fff;font-size:10.5pt}
+  body > *:not(#print){display:none !important}
+  #print{display:block}
+  .p-head{background:var(--navy) !important;color:#fff;padding:10px 14px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .p-head h1{color:#fff;font-size:18pt}
+  .p-head div{font-size:10.5pt;margin-top:2px}
+  .p-sec{margin-top:10px;break-inside:avoid}
+  .p-sec h2{font-size:13pt;border-bottom:2px solid var(--orange);padding-bottom:2px;margin-bottom:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .p-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+  .p-sec dl{display:grid;grid-template-columns:36mm 1fr;margin:0}
+  .p-sec dt{font-weight:700;color:var(--navy);padding:2px 6px 2px 0;border-bottom:1px solid #E4EBF2}
+  .p-sec dd{margin:0;padding:2px 0;border-bottom:1px solid #E4EBF2}
+  .p-sec ul{margin:2px 0;padding-left:16px}
+  .p-box{border:1.5px solid var(--line);border-radius:6px;padding:8px 10px}
+  .v{background:none !important;padding:0;margin:0;display:inline}
+  .v::after{content:",\00a0"}
+  .v:last-child::after{content:""}
+  .p-foot{margin-top:14px;font-size:9pt;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
+  .p-notes{background:#FFF6EE !important;border-left:3px solid var(--orange);padding:4px 8px;margin-top:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cb{display:inline-block;width:10pt;height:10pt;border:1.2px solid var(--ink);margin-right:6px;vertical-align:-1pt}
+  a{color:var(--ink);text-decoration:none}
+  .p-link a{color:#1F4E79;text-decoration:underline}
+}
+
+/* Logo, kredīti un 16:9 izkārtojums */
+html,body{height:100%}
+body{display:flex;flex-direction:column;overflow:hidden}
+.top{flex:none;padding:8px 20px}
+.brand h1{font-size:22px}
+.logo{height:46px;width:auto;background:#fff;border-radius:8px;padding:3px 6px;flex:none}
+#start{flex:1;overflow:auto;margin:24px auto;width:100%}
+#app{flex:1;min-height:0;overflow:hidden}
+.rail{overflow-y:auto}
+main{overflow-y:auto;height:100%;width:100%}
+.credit{flex:none;background:#fff;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padding:5px 20px;text-align:right}
+@media (max-width:900px){body{overflow:auto}#app{overflow:visible}main{height:auto}}
+@media print{.credit{display:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <img class="logo" src="data:image/png;base64,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" alt="Jaunmārupes pamatskolas logo">
+    <div><h1>Karjeras kompass</h1><small id="roleLabel">Individuālā karjeras konsultācija</small></div>
+  </div>
+  <div class="spacer"></div>
+  <span id="codeWrap" style="display:none">Kods: <span class="codebox" id="codeShow"></span></span>
+  <span class="pill"><span class="dot" id="connDot"></span><span id="connText">Nav savienojuma</span></span>
+  <button class="btn small" id="btnReconnect" style="display:none">Savienoties vēlreiz</button>
+  <button class="btn small" id="btnSwitch" style="display:none"></button>
+</header>
+
+<!-- Sākuma ekrāns -->
+<section id="start">
+  <div class="intro">
+    <h2>Individuālā karjeras konsultācija</h2>
+    <p>Skolēns aizpilda savu daļu, karjeras konsultante to redz savā datorā un pievieno piezīmes. Rezultāts tiek saglabāts PDF formātā.</p>
+  </div>
+  <div class="start-grid">
+    <div class="panel">
+      <h2>Esmu skolēns</h2>
+      <p>Ievadi kodu, ko redzi karjeras konsultantes ekrānā.</p>
+      <div class="row">
+        <input class="codeinput" id="joinCode" maxlength="5" autocomplete="off" aria-label="Savienojuma kods">
+        <button class="btn primary" id="btnJoin">Pievienoties</button>
+      </div>
+      <div class="msg" id="joinMsg"></div>
+      <button class="linkbtn" id="btnStudentOffline">Strādāt bez savienojuma</button>
+    </div>
+    <div class="panel">
+      <h2>Esmu konsultants</h2>
+      <p>Šie dati tiks norādīti visās PDF lapās.</p>
+      <label class="f" for="setName">Vārds, uzvārds</label>
+      <input type="text" id="setName" value="Jolanta Grosberga-Gernere">
+      <label class="f" for="setRole">Amats</label>
+      <input type="text" id="setRole" value="pedagoģe-karjeras konsultante">
+      <label class="f" for="setSchool">Skola</label>
+      <input type="text" id="setSchool" value="Jaunmārupes pamatskola">
+      <label class="f" for="codeIn">Anketas datu kods no skolēna vēstules <span class="opt">neobligāti</span></label>
+      <textarea id="codeIn" rows="2" placeholder="Ielīmē tekstu, kas sākas ar KK"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="btnCode">Ielādēt datu kodu</button><span id="codeMsg" class="hint"></span></div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="btnHost">Sākt konsultāciju</button>
+        <button class="btn" id="btnConsOffline">Strādāt bez savienojuma</button>
+      </div>
+      <div class="msg" id="hostMsg"></div>
+    </div>
+  </div>
+  <div class="note">Dati netiek glabāti ne serverī, ne datorā. Tie tiek pārsūtīti tieši starp abiem datoriem. Aizverot lapu, dati izzūd, tāpēc konsultācijas beigās saglabā PDF.</div>
+</section>
+
+<!-- Darba laukums -->
+<div id="app">
+  <nav class="rail" aria-label="Soļi"><ol id="rail"></ol></nav>
+  <main id="main"></main>
+</div>
+
+<input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+<footer class="credit">Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</footer>
+<div id="print"></div>
+
+<script>
+/* ============ Konstantes ============ */
+const PREFIX = 'jpskk-';
+const STEPS = [
+  {id:'sakums',  t:'Sākums'},
+  {id:'tests',   t:'Interešu tests'},
+  {id:'stils',   t:'Darba stils un ritms'},
+  {id:'es',      t:'Es pats'},
+  {id:'grupa',   t:'Grupā un brīvajā laikā'},
+  {id:'macibas', t:'Mācības un mājas'},
+  {id:'prof',    t:'Profesijas un pieredze'},
+  {id:'varoni',  t:'Bērnība un varoņi'},
+  {id:'enu',     t:'Gatavojos Ēnu dienai'},
+  {id:'modulis', t:'Padziļinātie jautājumi'},
+  {id:'nosl',    t:'Noslēgums', tk:'Secinājumi un ieteikumi'}
+];
+const RIASEC = [
+ ['R','Remontēt velosipēdu vai ierīci.',1],
+ ['R','Strādāt ar instrumentiem darbnīcā.',1],
+ ['R','Kopt dārzu vai rūpēties par dzīvniekiem.',0],
+ ['R','Salikt vai uzbūvēt kaut ko pēc shēmas.',1],
+ ['R','Darboties ārā, nevis pie galda telpā.',0],
+ ['I','Noskaidrot, kāpēc kaut kas notiek tieši tā.',1],
+ ['I','Risināt sarežģītus uzdevumus.',1],
+ ['I','Veikt eksperimentus un mērījumus.',0],
+ ['I','Lasīt par zinātnes atklājumiem.',1],
+ ['I','Meklēt kļūdu, līdz tā ir atrasta.',0],
+ ['A','Zīmēt, fotografēt vai veidot video.',1],
+ ['A','Izdomāt kaut ko pilnīgi jaunu.',1],
+ ['A','Spēlēt mūziku, dziedāt vai dejot.',0],
+ ['A','Rakstīt stāstus vai tekstus.',1],
+ ['A','Veidot lietu vizuālo izskatu.',0],
+ ['S','Palīdzēt jaunākam skolēnam saprast uzdevumu.',1],
+ ['S','Uzklausīt, ja kādam ir grūti.',1],
+ ['S','Strādāt ar cilvēkiem katru dienu.',0],
+ ['S','Mācīt citiem to, ko labi protu.',1],
+ ['S','Rūpēties par kādu, kam vajadzīga palīdzība.',0],
+ ['E','Pārliecināt citus par savu ideju.',1],
+ ['E','Vadīt komandu un sadalīt pienākumus.',1],
+ ['E','Piedāvāt vai pārdot kaut ko cilvēkiem.',0],
+ ['E','Uzņemties atbildību par rezultātu.',1],
+ ['E','Sākt savu uzņēmējdarbību.',0],
+ ['C','Sakārtot datus tabulā, lai viss ir precīzi.',1],
+ ['C','Strādāt pēc skaidriem noteikumiem.',1],
+ ['C','Sekot līdzi naudai un rēķiniem.',0],
+ ['C','Pierakstīt un kārtot informāciju.',1],
+ ['C','Pabeigt darbu līdz pēdējai detaļai.',0]
+];
+const TIPI = {
+ R:{n:'Praktiskais',d:'Tev patīk strādāt ar rokām, tehniku un materiāliem, lai taptu konkrēts rezultāts.',p:['inženieris','autoatslēdznieks','celtnieks','elektriķis','lauksaimnieks','sporta treneris']},
+ I:{n:'Pētnieks',d:'Tev patīk saprast cēloņus, analizēt un meklēt risinājumus.',p:['ārsts','laborants','programmētājs','vides speciālists','datu analītiķis','veterinārārsts']},
+ A:{n:'Radošais',d:'Tev patīk izdomāt ko jaunu, izpausties un veidot vizuālu vai skanošu rezultātu.',p:['dizainers','arhitekts','fotogrāfs','mūziķis','žurnālists','video montāžas speciālists']},
+ S:{n:'Sociālais',d:'Tev patīk strādāt ar cilvēkiem, palīdzēt, mācīt un uzklausīt.',p:['skolotājs','psihologs','māsa','sociālais darbinieks','fizioterapeits','pasākumu vadītājs']},
+ E:{n:'Uzņēmīgais',d:'Tev patīk uzņemties iniciatīvu, vadīt citus un pārliecināt.',p:['uzņēmējs','projektu vadītājs','pārdošanas speciālists','jurists','mārketinga speciālists','loģistikas vadītājs']},
+ C:{n:'Sistemātiskais',d:'Tev patīk kārtība, precizitāte un skaidri noteikumi.',p:['grāmatvedis','bibliotekārs','administrators','banku darbinieks','muitnieks','biroja vadītājs']}
+};
+const PRASMJU_TESTS = [
+ ['Strādāt ar tehniku un ierīcēm',1],['Rīkoties ar skaitļiem un aprēķiniem',1],['Uzstāties citu priekšā',1],
+ ['Rakstīt tekstus',1],['Plānot savu laiku',1],['Strādāt komandā',1],['Zīmēt un veidot vizuālus darbus',1],
+ ['Risināt negaidītas situācijas',1],['Runāt svešvalodās',0],['Skaidrot un mācīt citiem',0],
+ ['Ievērot precizitāti un kārtību',0],['Vadīt un organizēt citus',0]
+];
+const IEPAZ = [
+ ['iep1','Ko Tu dari, kad esi brīvs?'],
+ ['iep2','Ko Tu darītu, ja rīt būtu pilnīgi brīva diena?'],
+ ['iep3','Kurš cilvēks Tev ir paraugs un kāpēc?'],
+ ['iep4','Kas skolā Tev sagādā prieku?'],
+ ['iep5','Kas Tevi visvairāk nogurdina?']
+];
+const STILS = [
+ ['ritms','Vislabāk strādāju no rīta','Vislabāk strādāju vakarā'],
+ ['soc','Labāk daru visu viens','Labāk daru kopā ar citiem'],
+ ['troksnis','Man vajag klusumu','Man patīk kustība un skaņas apkārt'],
+ ['vide','Labāk telpā pie galda','Labāk ārā un kustībā'],
+ ['rutina','Patīk kārtība un rutīna','Patīk pārmaiņas un negaidīti uzdevumi'],
+ ['plans','Vispirms saplānoju','Sāku darīt un pielāgojos'],
+ ['temps','Strādāju lēni un rūpīgi','Strādāju ātri, pēc tam pārbaudu'],
+ ['obj','Labāk strādāju ar lietām un tehniku','Labāk strādāju ar cilvēkiem'],
+ ['detal','Man patīk detaļas','Man patīk kopskats'],
+ ['lem','Pirms izlemju, izpētu','Uzticos sajūtai']
+];
+const MACST = [
+ ['V','Vieglāk saprotu, kad redzu attēlu vai shēmu'],
+ ['A','Vieglāk saprotu, kad kāds izstāsta'],
+ ['K','Vieglāk saprotu, kad varu izmēģināt praksē'],
+ ['V','Pierakstu un iezīmēju ar krāsām'],
+ ['A','Mācoties skaļi pārrunāju vai atkārtoju'],
+ ['K','Mācoties nevaru ilgi nosēdēt vienā vietā']
+];
+const MACST_N = {V:'vizuāli',A:'dzirdot',K:'darot'};
+const MODULI = [
+ ['zinu','Zinu, ko gribu',[
+   'Kura profesija ir Tavs mērķis?','Kas Tevi šajā profesijā visvairāk piesaista?',
+   'Kur šo profesiju var apgūt? Nosauc divas mācību iestādes.','Kuri mācību priekšmeti un eksāmeni tur ir svarīgi?',
+   'Ko vari darīt jau šogad, lai tuvotos mērķim?','Kāds ir Tavs otrs variants, ja izvēlētais ceļš neizdodas?',
+   'Ko par šo izvēli domā Tava ģimene?']],
+ ['nezinu','Nezinu, ko gribu',[
+   'Ko Tu noteikti negribi darīt?','Kādā vidē Tu gribētu strādāt: telpā, ārā, ceļā vai mājās?',
+   'Ar ko Tu gribētu strādāt: ar cilvēkiem, datiem, tehniku vai idejām?','Kad skolā pēdējoreiz bija tiešām interesanti? Kāpēc?',
+   'Kuras trīs jomas izpētīsi tuvākajā mēnesī?','Ko izmēģināsi praksē: pulciņu, ēnošanu vai brīvprātīgo darbu?']],
+ ['eksakta','Eksaktā ievirze',[
+   'Kuri eksaktie priekšmeti Tev padodas vislabāk?','Kuras vidusskolas vai valsts ģimnāzijas Tu apsver?',
+   'Kurus padziļinātos kursus Tu apsver vidusskolā?','Vai Tu piedalies olimpiādēs, zinātniski pētnieciskajos darbos vai tehniskajos pulciņos?',
+   'Kuras studiju jomas Tevi interesē?','Ko darīsi, lai uzlabotu rezultātus matemātikā vai dabaszinātnēs?']],
+ ['human','Humanitārā un sociālā ievirze',[
+   'Kuras valodas un humanitārie priekšmeti Tev padodas?','Kas Tev patīk vairāk: rakstīt, uzstāties vai veidot vizuālus darbus?',
+   'Vai Tev ir portfolio vai darbu krājums? Kas tajā ir?','Kuras radošās vai sociālās jomas Tevi interesē?',
+   'Vai izvēlētajā programmā ir iestājpārbaudījumi? Kādi?','Ko pievienosi portfolio tuvākajā pusgadā?']],
+ ['prof','Profesionālā izglītība',[
+   'Vai Tu apsver tehnikumu vai profesionālo vidusskolu?','Kuras kvalifikācijas Tevi interesē?',
+   'Kurās mācību iestādēs tās var apgūt?','Kādi ir uzņemšanas nosacījumi un termiņi?',
+   'Vai gribi vēlāk turpināt mācības augstskolā?','Kas Tev ir svarīgāk: ātrāk iegūt profesiju vai ilgāk mācīties?']]
+];
+const IPASIBAS = ['Atbildība','Radošums','Zinātkāre','Draudzīgums','Mierīgums','Enerģiskums','Pacietība','Precizitāte','Izpalīdzība','Mērķtiecība','Drosme','Humora izjūta','Kārtīgums','Neatlaidība','Godīgums','Empātija','Patstāvība','Uzņēmība','Sabiedriskums','Rūpība','Loģiska domāšana','Iejūtība','Organizētība','Optimisms','Praktiskums','Pašpārliecinātība','Elastīgums','Uzmanība pret detaļām'];
+const PRASMES = ['Zīmēšana','Rēķināšana','Rakstīšana','Uzstāšanās','Darbs ar datoru','Programmēšana','Sports','Muzicēšana','Dziedāšana','Dejošana','Svešvalodas','Gatavošana','Konstruēšana','Remontēšana','Rūpes par dzīvniekiem','Rūpes par mazākiem bērniem','Fotografēšana','Video veidošana','Dizains','Plānošana','Sadarbība komandā','Problēmu risināšana','Uzklausīšana','Pārliecināšana','Rokdarbi','Dārzkopība','Citu mācīšana'];
+const VERTIBAS = ['Ģimene','Draudzība','Veselība','Brīvība','Drošība','Godīgums','Taisnīgums','Atzinība','Materiālā labklājība','Radošums','Zināšanas','Izaugsme','Piedzīvojumi','Palīdzēt citiem','Daba','Ietekme','Stabilitāte','Neatkarība','Cieņa','Sasniegumi','Harmonija','Tradīcijas'];
+const PRIEKSMETI = ['Latviešu valoda','Literatūra','Angļu valoda','Otrā svešvaloda','Matemātika','Datorika','Dabaszinības','Bioloģija','Ķīmija','Fizika','Ģeogrāfija','Vēsture','Sociālās zinības','Vizuālā māksla','Mūzika','Teātra māksla','Dizains un tehnoloģijas','Sports un veselība'];
+const UZTVERE = ['Klausoties','Redzot','Izjūtot un darot'];
+const LOMAS = [['lideris','Līderis'],['eksperts','Eksperts vai speciālists'],['noformetajs','Noformētājs'],['runatajs','Runātājs'],['ideju','Ideju ģenerētājs'],['delegetajs','Deleģētājs']];
+const TEMPER = [['holēriķis','Holēriķis'],['sangviniķis','Sangviniķis'],['flegmatiķis','Flegmatiķis'],['melanholiķis','Melanholiķis'],['nezinu','Vēl nezinu']];
+const RES = [
+  {id:'niid',  n:'NIID.lv profesionālās ievirzes testi', u:'https://testi.niid.lv/'},
+  {id:'nd',    n:'Nākotnes darbs', u:'https://www.nakotnesdarbs.lv/'},
+  {id:'temp',  n:'Temperamenta tests', u:'http://ed.id.lv/temper/tempertest.php'},
+  {id:'nva',   n:'NVA darba tirgus prognozes', u:'https://prognozes.nva.gov.lv/lv'},
+  {id:'algas', n:'Algu informācija (algas.lv)', u:'https://www.algas.lv/algu-informacija'},
+  {id:'prakse',n:'Profesiju saraksts (prakse.lv)', u:'https://www.prakse.lv/profession/list'},
+  {id:'pp',    n:'Profesiju pasaule', u:'https://www.profesijupasaule.lv/'},
+  {id:'enu',   n:'Ēnu diena', u:'https://www.enudiena.lv/'},
+  {id:'wef',   n:'WEF „Future of Jobs Report 2025” (angļu valodā)', u:'https://reports.weforum.org/docs/WEF_Future_of_Jobs_Report_2025.pdf'}
+];
+const SOLI = [
+  'Izpildīt profesionālās ievirzes testus (testi.niid.lv)',
+  'Izpētīt izvēlētās profesijas pieprasījumu un atalgojumu',
+  'Palūgt ģimenei vai draugiem mani raksturot',
+  'Izveidot trīs iespējamo profesiju sarakstu un izvirzīt vienu',
+  'Atrast ēnu devēju un sarunāt tikšanos',
+  'Sagatavot jautājumus ēnu devējam',
+  'Uzrakstīt radošo uzdevumu „No bērnības sapņa līdz šodienas izvēlei”',
+  'Izmēģināt jaunu pulciņu vai interešu izglītības nodarbību'
+];
+
+/* ============ Stāvoklis ============ */
+function now(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function newS(){return{
+  name:'',klase:'',datums:today(),laiks:now(),nr:'1',merkis:'',skalaSak:0,skalaBeig:0,
+  iep1:'',iep2:'',iep3:'',iep4:'',iep5:'',
+  testLen:'pilns',riasec:{},prasmesT:{},stils:{},macStils:{},mod:{},
+  ipasibas:[],prasmes:[],lepnums:'',motivacija:'',
+  lomas:{},hobijs:'',pulcini:'',gribetu:'',pasparvalde:'',runat:'',
+  prieksmeti:{},padodas:{},prieksmCustom:[],prieksmPrec:'',prieksmVienmer:'',uztvere:[],pienakumi:'',varetu:'',
+  profBerniba:[],profTagad:[],gimProf:[],gimIetekme:'',
+  enots:[{p:'',pat:'',nep:''},{p:'',pat:'',nep:''}],darbs:'',darbsPat:'',nauda:'',
+  rotallietas:'',lego:'',legoKo:'',instrukcijas:'',
+  varoni:[{v:'',ip:'',kas:''},{v:'',ip:'',kas:''},{v:'',ip:'',kas:''}],
+  gramata:{n:'',z:'',v:'',kas:''},filma:{n:'',z:'',v:'',kas:''},kopigais:'',moto:'',
+  vertibas:[],temperaments:'',testi:'',top3:['','',''],izvirzita:'',sapnis:''
+};}
+function newK(){return{
+  konsultants:'',amats:'',skola:'',
+  moduli:[],stipras:'',jomas:[],ieteikumi:'',uzdevums:'',norunats:'',linki:[],
+  soli:SOLI.map(t=>({t,on:false})),resursi:[],resCustom:[],nakama:''
+};}
+function newP(){return{notes:{},kopigais:'',secinajumi:''};}
+const R = {S:newS(), K:newK(), P:newP()};
+
+let ROLE = null;          // 'skolens' | 'konsultants'
+let MODE = 'offline';     // 'offline' | 'online'
+let STEP = 0;
+let studentStep = 0;
+let follow = true;
+let peer = null, conn = null, CODE = '', retry = 0, retryTimer = null;
+const WREG = {};
+
+/* ============ Palīgfunkcijas ============ */
+const $ = s => document.querySelector(s);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function getP(o,p){return p.split('.').reduce((a,k)=>a==null?undefined:a[k],o);}
+function setP(o,p,v){const k=p.split('.');let a=o;for(let i=0;i<k.length-1;i++){if(a[k[i]]==null)a[k[i]]={};a=a[k[i]];}a[k[k.length-1]]=v;}
+function has(v){if(Array.isArray(v))return v.some(has);if(v&&typeof v==='object')return Object.values(v).some(has);return v!==''&&v!==0&&v!=null&&v!==false;}
+function fmtDate(d){if(!d)return '';const p=d.split('-');return p.length===3?`${p[2]}.${p[1]}.${p[0]}.`:d;}
+function stepTitle(i){return ROLE==='konsultants'&&STEPS[i].tk?STEPS[i].tk:STEPS[i].t;}
+
+/* ============ Logrīki ============ */
+function fld(label,path,o={}){
+  const v=esc(getP(R,path)??'');const id='f_'+path.replace(/\./g,'_');
+  const opt=o.opt?'<span class="opt">neobligāti</span>':'';
+  const inp=o.area?`<textarea id="${id}" data-f="${path}" rows="${o.rows||3}" placeholder="${esc(o.ph||'')}">${v}</textarea>`
+                  :`<input type="${o.type||'text'}" id="${id}" data-f="${path}" value="${v}" placeholder="${esc(o.ph||'')}">`;
+  return `${label?`<label class="f" for="${id}">${label}${opt}</label>`:''}${inp}${o.hint?`<div class="hint">${o.hint}</div>`:''}`;
+}
+function chipsW(path,opts,max,custom=true){WREG[path]={k:'chips',opts,max,custom};return `<div class="chips" data-w="${path}">${chipsIn(path)}</div>`;}
+function chipsIn(path){
+  const {opts,max,custom}=WREG[path];const arr=getP(R,path)||[];
+  const all=[...opts,...arr.filter(x=>!opts.includes(x))];const full=arr.length>=max;
+  let h=all.map(o=>{const on=arr.includes(o);return `<button type="button" class="chip${on?' on':''}${full&&!on?' full':''}" data-act="chip" data-p="${path}" data-v="${esc(o)}" aria-pressed="${on}">${esc(o)}</button>`;}).join('');
+  h+=`<span class="count">${arr.length} / ${max}</span>`;
+  if(custom)h+=`<div class="addrow"><input type="text" placeholder="Ieraksti savu un spied Enter" data-enter><button type="button" class="btn small" data-act="chipadd" data-p="${path}">Pievienot</button></div>`;
+  return h;
+}
+function tagsW(path,ph){WREG[path]={k:'tags',ph};return `<div class="chips" data-w="${path}">${tagsIn(path)}</div>`;}
+function tagsIn(path){
+  const arr=getP(R,path)||[];
+  return arr.map((t,i)=>`<span class="tag">${esc(t)}<button type="button" data-act="tagdel" data-p="${path}" data-i="${i}" aria-label="Dzēst ${esc(t)}">×</button></span>`).join('')+
+    `<div class="addrow"><input type="text" placeholder="${esc(WREG[path].ph||'Ieraksti un spied Enter')}" data-enter><button type="button" class="btn small" data-act="tagadd" data-p="${path}">Pievienot</button></div>`;
+}
+function segW(path,opts){WREG[path]={k:'seg',opts};return `<div class="seg" data-w="${path}">${segIn(path)}</div>`;}
+function segIn(path){const v=getP(R,path);return WREG[path].opts.map(([val,l])=>`<button type="button" class="${String(v)===String(val)?'on':''}" data-act="seg" data-p="${path}" data-v="${esc(val)}">${esc(l)}</button>`).join('');}
+function scaleW(path,lo,hi){WREG[path]={k:'scale',lo,hi};return `<div data-w="${path}">${scaleIn(path)}</div>`;}
+function scaleIn(path){const v=getP(R,path);let h='<div class="scale">';for(let i=1;i<=10;i++)h+=`<button type="button" class="${v===i?'on':''}" data-act="scale" data-p="${path}" data-v="${i}">${i}</button>`;return h+`</div><div class="scale-ends"><span>${WREG[path].lo}</span><span>${WREG[path].hi}</span></div>`;}
+function lightW(key){const path='S.lomas.'+key;WREG[path]={k:'light'};return `<span data-w="${path}">${lightIn(path)}</span>`;}
+function lightIn(path){const v=getP(R,path)||'';return `<span class="light">${[['g','Zaļš: tas ir par mani'],['y','Dzeltens: dažreiz'],['r','Sarkans: nav par mani']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="seg" data-p="${path}" data-v="${c}" title="${l}" aria-label="${l}"></button>`).join('')}</span>`;}
+WREG['S.riasec']={k:'ri'};WREG['S.prasmesT']={k:'sk'};WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};
+function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();}
+function subjW(){WREG['S.prieksmeti']={k:'subj'};return `<div data-w="S.prieksmeti">${subjIn()}</div>`;}
+function subjIn(){
+  const list=[...PRIEKSMETI,...R.S.prieksmCustom];
+  const rows=list.map(s=>{const v=R.S.prieksmeti[s]||'';const st=!!R.S.padodas[s];
+    return `<div class="subjrow"><span class="nm">${esc(s)}</span>
+      <button type="button" class="star${st?' on':''}" data-act="star" data-v="${esc(s)}" title="Padodas labi" aria-label="Padodas labi: ${esc(s)}" aria-pressed="${st}">★</button>
+      <span class="seg">${[['p','Patīk'],['x','Neitrāli'],['n','Nepatīk']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="subj" data-s="${esc(s)}" data-v="${c}">${l}</button>`).join('')}</span></div>`;}).join('');
+  return `<div class="subj">${rows}</div><div class="addrow"><input type="text" placeholder="Cits mācību priekšmets" data-enter><button type="button" class="btn small" data-act="subjadd">Pievienot</button></div>`;
+}
+function rerender(path){
+  const el=document.querySelector(`[data-w="${path}"]`);if(!el)return;const w=WREG[path];
+  const f={chips:chipsIn,tags:tagsIn,seg:segIn,scale:scaleIn,light:lightIn,subj:subjIn,ri:riIn,sk:skIn,stils:stilsIn,mac:macIn}[w.k];
+  el.innerHTML=f(path);
+}
+
+/* ============ Interešu tests ============ */
+function riItems(){return RIASEC.filter(i=>R.S.testLen==='pilns'||i[2]);}
+function skItems(){return PRASMJU_TESTS.filter(i=>R.S.testLen==='pilns'||i[1]);}
+function riIn(){
+  const items=riItems();
+  const rows=items.map((it,i)=>{const k=RIASEC.indexOf(it);const v=R.S.riasec[k]||'';
+    return `<div class="itemrow"><span class="nm">${esc(it[1])}</span><span class="seg">${[['p','Patīk'],['x','Neitrāli'],['n','Nepatīk']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="ri" data-k="${k}" data-v="${c}">${l}</button>`).join('')}</span></div>`;}).join('');
+  const done=items.filter(it=>R.S.riasec[RIASEC.indexOf(it)]).length;
+  return `<div class="prog">Atbildēts: ${done} no ${items.length}</div><div class="items">${rows}</div>`;
+}
+function skIn(){
+  const items=skItems();
+  const rows=items.map(it=>{const v=R.S.prasmesT[it[0]]||'';
+    return `<div class="itemrow"><span class="nm">${esc(it[0])}</span><span class="seg">${[['l','Labi padodas'],['v','Vidēji'],['j','Vēl jāmācās']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="sk" data-s="${esc(it[0])}" data-v="${c}">${l}</button>`).join('')}</span></div>`;}).join('');
+  return `<div class="items">${rows}</div>`;
+}
+function stilsIn(){
+  return '<div class="items" style="grid-template-columns:1fr">'+STILS.map(([k,a,b])=>{const v=R.S.stils[k]||'';
+    return `<div class="itemrow"><span class="nm" style="text-align:right">${esc(a)}</span><span class="seg">${[['a','A'],['v','Kā kuru reizi'],['b','B']].map(([c,l])=>`<button type="button" class="${c==='v'?'x':'p'}${v===c?' on':''}" data-act="st" data-k="${k}" data-v="${c}">${l}</button>`).join('')}</span><span class="nm">${esc(b)}</span></div>`;}).join('')+'</div>';
+}
+function macIn(){
+  return '<div class="items" style="grid-template-columns:1fr">'+MACST.map(([g,q],i)=>{const v=R.S.macStils[i]||'';
+    return `<div class="itemrow"><span class="nm">${esc(q)}</span><span class="seg">${[['p','Jā'],['x','Dažreiz'],['n','Nē']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="ms" data-k="${i}" data-v="${c}">${l}</button>`).join('')}</span></div>`;}).join('')+'</div>';
+}
+function stilsProfile(){
+  const a=[];STILS.forEach(([k,x,y])=>{const v=R.S.stils[k];if(v==='a')a.push(x);if(v==='b')a.push(y);});return a;
+}
+function macResult(){
+  const sc={V:0,A:0,K:0};let any=false;
+  MACST.forEach(([g],i)=>{const v=R.S.macStils[i];if(v){any=true;sc[g]+=v==='p'?2:v==='x'?1:0;}});
+  if(!any)return null;
+  const mx=Math.max(sc.V,sc.A,sc.K);
+  return {sc,top:Object.keys(sc).filter(k=>sc[k]===mx&&mx>0).map(k=>MACST_N[k])};
+}
+function stilsResHTML(){
+  const pr=stilsProfile();const m=macResult();
+  if(!pr.length&&!m)return `<h3>Tavs darba stils</h3><p class="muted">Rezultāts parādīsies, tiklīdz atzīmēsi pirmās atbildes.</p>`;
+  return `<h3>Tavs darba stils</h3>
+    ${pr.length?`<div>${pr.map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}
+    ${m?`<div style="margin-top:10px"><b>Mācos vieglāk:</b> ${esc(m.top.join(' un '))}</div>`:''}
+    <p class="hint">Šeit nav ne laba, ne slikta rezultāta. Tas parāda, kādi darba apstākļi Tev der vislabāk.</p>`;
+}
+function riScore(){
+  const items=riItems();const sc={},mx={};
+  'RIASEC'.split('').forEach(c=>{sc[c]=0;mx[c]=0;});
+  items.forEach(it=>{const k=RIASEC.indexOf(it);const v=R.S.riasec[k];mx[it[0]]+=2;sc[it[0]]+=v==='p'?2:v==='x'?1:0;});
+  const arr=Object.keys(sc).map(c=>({c,n:TIPI[c].n,pct:mx[c]?Math.round(sc[c]/mx[c]*100):0}));
+  arr.sort((a,b)=>b.pct-a.pct);
+  const done=items.filter(it=>R.S.riasec[RIASEC.indexOf(it)]).length;
+  return {arr,done,total:items.length};
+}
+function skLists(){
+  const l=[],j=[];
+  skItems().forEach(it=>{const v=R.S.prasmesT[it[0]];if(v==='l')l.push(it[0]);if(v==='j')j.push(it[0]);});
+  return {l,j};
+}
+function testResHTML(){
+  const {arr,done,total}=riScore();
+  if(done<Math.ceil(total*0.5))return `<h3>Tavs rezultāts</h3><p class="muted">Rezultāts parādīsies, kad būs atbildēta vismaz puse apgalvojumu (${done} no ${total}).</p>`;
+  const top=arr.slice(0,3);
+  const mine=[...R.S.top3.filter(has)];
+  return `<h3>Tavs rezultāts</h3>
+    ${top.map(x=>`<div class="tipcard"><h4>${x.n} (${x.pct}%)</h4><div>${esc(TIPI[x.c].d)}</div>
+      <div class="hint">Profesiju piemēri: ${TIPI[x.c].p.join(', ')}. <a href="https://www.profesijupasaule.lv/" target="_blank" rel="noopener">Profesiju pasaule</a></div></div>`).join('')}
+    <div style="margin-top:8px">${arr.map(x=>`<div style="margin-bottom:6px"><span style="font-size:14px">${x.n} ${x.pct}%</span><span class="bar"><span style="width:${x.pct}%"></span></span></div>`).join('')}</div>
+    ${mine.length?`<div class="hint" style="margin-top:8px">Tavas trīs iespējamās profesijas: ${esc(mine.join(', '))}. Vai tas sakrīt ar rezultātu?</div>`:''}
+    <p class="hint">Tas nav spriedums par Tevi. Tas ir tikai sarunas sākums, un pareizu atbilžu šeit nav.</p>`;
+}
+
+/* ============ Skolēna soļi ============ */
+function linkList(ids){return '<ul style="margin:6px 0 0;padding-left:18px">'+RES.filter(r=>ids.includes(r.id)).map(r=>`<li><a href="${r.u}" target="_blank" rel="noopener">${esc(r.n)}</a></li>`).join('')+'</ul>';}
+const SVIEW = {
+  sakums:()=>`
+    <p class="lead">Šī lapa palīdzēs Tev labāk iepazīt sevi un saprast, kāds darbs Tev varētu patikt. Atbildi godīgi, šeit nav pareizu vai nepareizu atbilžu.</p>
+    <div class="grid2">
+      <div class="card">${fld('Vārds, uzvārds','S.name')}
+        <div class="grid2" style="gap:12px"><div>${fld('Klase','S.klase',{ph:'8.b'})}</div><div>${fld('Datums','S.datums',{type:'date'})}</div></div>
+        <div class="grid2" style="gap:12px"><div>${fld('Laiks','S.laiks',{type:'time'})}</div><div>${fld('Kura konsultācija pēc kārtas','S.nr',{ph:'1'})}</div></div></div>
+      <div class="card accent">${fld('Ko Tu vēlies uzzināt šajā konsultācijā?','S.merkis',{area:1,rows:3})}
+        <label class="f">Cik skaidri Tu šobrīd zini, ko vēlies darīt nākotnē?</label>${scaleW('S.skalaSak','Nemaz nezinu','Zinu pilnīgi droši')}</div>
+      <div class="card span2"><h3>Iepazīsimies</h3>
+        <div class="grid2" style="gap:12px">${IEPAZ.map(([k,q])=>`<div>${fld(q,'S.'+k,{area:1,rows:2})}</div>`).join('')}</div></div>
+      <div class="card span2"><h3>Interešu testa apjoms</h3>
+        <p class="hint" style="margin-top:-4px">Pilnajā testā ir 30 apgalvojumi par interesēm un 12 par prasmēm; tas aizņem aptuveni sešas minūtes. Īsajā testā ir 18 un 8 apgalvojumi; tas aizņem aptuveni trīs minūtes.</p>
+        ${segW('S.testLen',[['pilns','Pilnais'],['iss','Īsais']])}</div>
+    </div>`,
+  tests:()=>`
+    <p class="lead">Atzīmē, cik ļoti Tev patiktu katru no šīm lietām darīt. Domā ātri, pirmā doma parasti ir precīzākā.</p>
+    <div class="kgrid">
+      <div>
+        <div class="card"><h3>Kas Tev patiktu darīt?</h3><div data-w="S.riasec">${riIn()}</div></div>
+        <div class="card" style="margin-top:20px"><h3>Kā Tev šķiet, kas Tev padodas?</h3><div data-w="S.prasmesT">${skIn()}</div></div>
+      </div>
+      <div class="card accent" id="testRes">${testResHTML()}</div>
+    </div>`,
+  stils:()=>`
+    <p class="lead">Šeit nav pareizu atbilžu. Izvēlies to pusi, kas Tev ir tuvāka, vai vidu, ja mēdz būt dažādi.</p>
+    <div class="kgrid">
+      <div>
+        <div class="card"><h3>Kā Tev patīk strādāt?</h3><div data-w="S.stils">${stilsIn()}</div></div>
+        <div class="card" style="margin-top:20px"><h3>Kā Tu vieglāk mācies?</h3><div data-w="S.macStils">${macIn()}</div></div>
+      </div>
+      <div class="card accent" id="stilsRes">${stilsResHTML()}</div>
+    </div>`,
+  modulis:()=>{
+    const sel=MODULI.filter(m=>R.K.moduli.includes(m[0]));
+    if(!sel.length)return `<p class="lead">Padziļinātā sadaļa vēl nav izvēlēta. Uzgaidi mirkli vai pārej uz nākamo soli.</p>`;
+    return `<p class="lead">Šie jautājumi ir par Tavu tālāko ceļu. Atbildi īsi, pārējo pārrunāsim.</p>
+      ${sel.map(([id,t,qs])=>`<div class="card" style="margin-bottom:16px"><h3>${esc(t)}</h3>
+        <div class="grid2" style="gap:12px">${qs.map((q,i)=>`<div>${fld(q,'S.mod.'+id+'_'+i,{area:1,rows:2})}</div>`).join('')}</div>
+        <div class="hint" style="margin-top:8px">Noderīgi: <a href="https://www.niid.lv/" target="_blank" rel="noopener">NIID.lv izglītības iespēju datubāze</a>, <a href="https://www.profesijupasaule.lv/" target="_blank" rel="noopener">Profesiju pasaule</a></div></div>`).join('')}`;
+  },
+  es:()=>`
+    <p class="lead">Izvēlies no saraksta vai ieraksti savus vārdus.</p>
+    <div class="grid2">
+      <div class="card"><h3>Kā Tu sevi raksturotu? Izvēlies piecas īpašības.</h3>${chipsW('S.ipasibas',IPASIBAS,5)}</div>
+      <div class="card"><h3>Ko Tu proti vislabāk? Izvēlies piecas prasmes.</h3>${chipsW('S.prasmes',PRASMES,5)}</div>
+      <div class="card span2">${fld('Ar ko savā dzīvē Tu lepojies visvairāk?','S.lepnums',{area:1})}
+        ${fld('Kas Tevi pamudināja to paveikt?','S.motivacija',{area:1,rows:2})}</div>
+    </div>`,
+  grupa:()=>`
+    <div class="grid2">
+      <div class="card"><h3>Kāda ir Tava loma grupā?</h3>
+        <div class="legend"><span class="lg">tas ir par mani</span><span class="ly">dažreiz</span><span class="lr">nav par mani</span></div>
+        <div class="roles">${LOMAS.map(([k,l])=>`<span>${l}</span>${lightW(k)}`).join('')}</div></div>
+      <div class="card">${fld('Vai Tev ir hobijs vai mīļākā nodarbošanās?','S.hobijs',{area:1,rows:2})}
+        ${fld('Kādus pulciņus, kursus vai sporta nodarbības Tu apmeklē?','S.pulcini',{area:1,rows:2})}
+        ${fld('Kādus Tu gribētu apmeklēt?','S.gribetu',{area:1,rows:2})}</div>
+      <div class="card">${fld('Vai darbojies skolēnu pašpārvaldē vai kādā nevalstiskā organizācijā?','S.pasparvalde',{area:1,rows:2})}</div>
+      <div class="card accent">${fld('Par ko Tu varētu runāt stundām ilgi?','S.runat',{area:1,rows:2})}</div>
+    </div>`,
+  macibas:()=>`
+    <div class="card"><h3>Kā Tev patīk mācību priekšmeti?</h3><p class="hint" style="margin-top:-6px">Ar zvaigznīti atzīmē tos, kas Tev labi padodas.</p>${subjW()}</div>
+    <div class="grid2" style="margin-top:20px">
+      <div class="card">${fld('Precizē, kas tieši patīk vai nepatīk','S.prieksmPrec',{area:1,rows:2,ph:'Piemēram, matemātikā ģeometrija, bet ne algebra'})}
+        ${fld('Vai tā ir bijis vienmēr?','S.prieksmVienmer',{area:1,rows:2})}
+        <label class="f">Kā Tev vieglāk uztvert informāciju stundās?</label>${chipsW('S.uztvere',UZTVERE,3,false)}</div>
+      <div class="card">${fld('Kādi ir Tavi pienākumi ģimenē un mājās?','S.pienakumi',{area:1,opt:1})}
+        ${fld('Ko vēl Tu varētu darīt?','S.varetu',{area:1,rows:2})}</div>
+    </div>`,
+  prof:()=>`
+    <div class="grid2">
+      <div class="card"><h3>Profesijas, kuras Tev jau ir nākušas prātā</h3>
+        <label class="f">Bērnībā</label>${tagsW('S.profBerniba','Piemēram, ugunsdzēsējs')}
+        <label class="f">Tagad</label>${tagsW('S.profTagad','Ieraksti profesiju')}</div>
+      <div class="card"><h3>Profesijas Tavā ģimenē <span class="opt">neobligāti</span></h3>${tagsW('S.gimProf','Ieraksti profesiju')}
+        ${fld('Vai tās ir ietekmējušas Tavas izvēles un intereses?','S.gimIetekme',{area:1,rows:2})}</div>
+      <div class="card"><h3>Vai Tev jau ir ēnošanas pieredze?</h3>
+        ${[0,1].map(i=>`<div class="grid3" style="gap:8px;margin-bottom:8px"><div>${fld(i?'':'Profesija','S.enots.'+i+'.p')}</div><div>${fld(i?'':'Kas patika','S.enots.'+i+'.pat')}</div><div>${fld(i?'':'Kas nepatika','S.enots.'+i+'.nep')}</div></div>`).join('')}</div>
+      <div class="card">${fld('Vai Tev jau ir bijis algots darbs, piemēram, vasarā?','S.darbs',{area:1,rows:2,opt:1})}
+        ${fld('Kas patika, kas nepatika?','S.darbsPat',{area:1,rows:2})}
+        ${fld('Ko Tev nozīmē pašu spēkiem nopelnīta nauda?','S.nauda',{area:1,rows:2,opt:1})}</div>
+    </div>`,
+  varoni:()=>`
+    <div class="grid2">
+      <div class="card">${fld('Ar ko Tu spēlējies bērnībā?','S.rotallietas',{area:1,rows:2})}
+        <label class="f">Vai spēlējies ar Lego?</label>${segW('S.lego',[['ja','Jā'],['ne','Nē']])}
+        ${fld('Ko Tu būvēji?','S.legoKo',{rows:1})}
+        <label class="f">Vai izmantoji instrukcijas?</label>${segW('S.instrukcijas',[['vienmer','Vienmēr'],['dazreiz','Dažreiz'],['nekad','Nekad']])}</div>
+      <div class="card accent">${fld('Kāds ir Tavs mīļākais teiciens vai dzīves moto?','S.moto',{area:1,rows:2})}
+        ${fld('Kas ir kopīgs visiem Taviem varoņiem?','S.kopigais',{area:1,rows:3,hint:'Aizpildi pēc tam, kad varoņi ir ierakstīti.'})}</div>
+    </div>
+    <h3 style="margin:22px 0 10px">Trīs multfilmu varoņi</h3>
+    <div class="grid3">${[0,1,2].map(i=>`<div class="card">${fld('Varonis','S.varoni.'+i+'.v')}${fld('Kādas ir viņa īpašības?','S.varoni.'+i+'.ip',{area:1,rows:2})}${fld('Kas Tevi piesaista?','S.varoni.'+i+'.kas',{area:1,rows:2})}</div>`).join('')}</div>
+    <div class="grid2" style="margin-top:20px">
+      ${[['gramata','Grāmata, kas palikusi atmiņā'],['filma','Mīļākā filma']].map(([k,t])=>`<div class="card"><h3>${t}</h3>
+        <div class="grid2" style="gap:10px"><div>${fld('Nosaukums','S.'+k+'.n')}</div><div>${fld('Žanrs','S.'+k+'.z')}</div></div>
+        ${fld('Varonis vai personāžs','S.'+k+'.v')}${fld('Kas Tevi piesaista?','S.'+k+'.kas',{area:1,rows:2})}</div>`).join('')}
+    </div>`,
+  enu:()=>`
+    <p class="lead">Šīs atbildes noderēs, gatavojoties Ēnu dienai un veidojot prezentācijas vizītkarti.</p>
+    <div class="grid2">
+      <div class="card"><h3>Kas Tev dzīvē ir vissvarīgākais? Izvēlies trīs vērtības.</h3>${chipsW('S.vertibas',VERTIBAS,3)}</div>
+      <div class="card"><h3>Testi</h3>
+        <label class="f">Mans temperamenta tips</label>${segW('S.temperaments',TEMPER)}
+        ${fld('Ko parādīja testu rezultāti?','S.testi',{area:1,rows:2,ph:'Piemēram, trīs piemērotākās jomas'})}
+        <div class="hint">Testi:</div>${linkList(['niid','nd','temp'])}</div>
+      <div class="card"><h3>Manas trīs iespējamās profesijas</h3>
+        ${[0,1,2].map(i=>`<div class="row" style="margin-bottom:8px;flex-wrap:nowrap"><span style="font-weight:700;width:18px">${i+1}.</span><input type="text" data-f="S.top3.${i}" value="${esc(R.S.top3[i])}" aria-label="${i+1}. profesija"></div>`).join('')}
+        <label class="f">Kuru profesiju Tu izvirzi Ēnu dienai?</label>${segW('S.izvirzita',[['0','1.'],['1','2.'],['2','3.']])}
+        <div class="hint">Profesijas izpētei:</div>${linkList(['nva','algas','prakse','pp'])}</div>
+      <div class="card accent"><h3>Radošais uzdevums „No bērnības sapņa līdz šodienas izvēlei”</h3>
+        <ul style="margin:0 0 8px;padding-left:18px;font-size:15px">
+          <li>Par ko bērnībā gribēji kļūt?</li>
+          <li>Kura rotaļlieta, spēle vai multfilmas varonis ir saistīts ar Tavām tagadējām interesēm? Izvēlies tikai vienu.</li>
+          <li>Kāpēc Ēnu dienā gribi ēnot tieši šo profesiju?</li></ul>
+        ${fld('Manas domas','S.sapnis',{area:1,rows:3,hint:'Tās ir tikai piezīmes. Pašu tekstu rakstīsi latviešu valodas stundā ar roku.'})}</div>
+    </div>`,
+  nosl:()=>`
+    <div class="grid2">
+      <div class="card accent"><label class="f">Cik skaidri Tu tagad zini, ko vēlies darīt nākotnē?</label>${scaleW('S.skalaBeig','Nemaz nezinu','Zinu pilnīgi droši')}
+        <div class="actions">
+          <button class="btn" data-act="export">Saglabāt failu konsultantei</button></div>
+        <p class="hint">Fails vajadzīgs tikai tad, ja strādājam bez savienojuma.</p></div>
+      <div class="card reco"><h3>Kas notiks tālāk</h3>
+        <p>Paldies par darbu! Karjeras konsultante izskatīs Tavas atbildes un pēc konsultācijas atsūtīs e-klasē lapu ar ieteikumiem un uzdevumu līdz nākamajai reizei.</p>
+        <p class="hint">Savas atbildes vari pārskatīt, atgriežoties jebkurā solī.</p></div>
+    </div>`
+};
+function nl(s){return esc(s).replace(/\n/g,'<br>');}
+function linkList2(){
+  return (R.K.linki||[]).map(s=>{const m=s.match(/https?:\/\/\S+/);
+    return {n:m?(s.replace(m[0],'').replace(/[\s–-]+$/,'').trim()||m[0]):s,u:m?m[0]:''};});
+}
+function resList(){
+  const a=RES.filter(r=>R.K.resursi.includes(r.id));
+  R.K.resCustom.forEach(t=>{const m=t.match(/https?:\/\/\S+/);a.push({n:m?t.replace(m[0],'').replace(/[\s–-]+$/,'').trim()||m[0]:t,u:m?m[0]:''});});
+  return a;
+}
+
+/* ============ Kopsavilkums (konsultantam un PDF) ============ */
+function V(x){
+  if(Array.isArray(x)){const a=x.filter(has);return a.length?a.map(i=>`<span class="v">${esc(i)}</span>`).join(''):'';}
+  return has(x)?nl(x):'';
+}
+const LBL={ja:'Jā',ne:'Nē',vienmer:'vienmēr',dazreiz:'dažreiz',nekad:'nekad'};
+function rows(id){
+  const S=R.S;
+  switch(id){
+    case 'sakums':return[['Vārds, uzvārds',V(S.name)],['Klase',V(S.klase)],['Datums un laiks',V([fmtDate(S.datums),S.laiks?'plkst. '+S.laiks:''].filter(Boolean).join(' '))],['Konsultācija Nr.',V(S.nr)],['Mērķis',V(S.merkis)],['Vērtējums sākumā',S.skalaSak?S.skalaSak+' / 10':''],
+      ...IEPAZ.map(([k,q])=>[q,V(S[k])])];
+    case 'tests':{const r=riScore(),sk=skLists();
+      return[['Testa apjoms',S.testLen==='iss'?'Īsais':'Pilnais'],['Atbildēts',r.done+' no '+r.total],
+        ['Trīs spēcīgākie tipi',r.done?r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
+        ['Visi tipi',r.done?r.arr.map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
+        ['Profesiju piemēri',r.done?esc(r.arr.slice(0,3).map(x=>TIPI[x.c].p.slice(0,4).join(', ')).join('; ')):''],
+        ['Labi padodas',V(sk.l)],['Vēl jāmācās',V(sk.j)]];}
+    case 'stils':{const m=macResult();
+      return[['Darba stils',V(stilsProfile())],['Mācās vieglāk',m?esc(m.top.join(' un ')):''],
+        ['Nav atzīmēts',V(STILS.filter(([k])=>!S.stils[k]).map(([,a])=>a.split(' ').slice(0,3).join(' ')+'…'))]];}
+    case 'modulis':{const sel=MODULI.filter(m=>R.K.moduli.includes(m[0]));
+      if(!sel.length)return[['Modulis','<span class="empty">nav izvēlēts</span>']];
+      const out=[];sel.forEach(([id,tt,qs])=>{out.push(['Modulis','<b>'+esc(tt)+'</b>']);qs.forEach((q,i)=>out.push([q,V(S.mod[id+'_'+i])]));});return out;}
+    case 'es':return[['Īpašības',V(S.ipasibas)],['Prasmes',V(S.prasmes)],['Lepnums',V(S.lepnums)],['Motivācija',V(S.motivacija)]];
+    case 'grupa':{const g=c=>LOMAS.filter(([k])=>S.lomas[k]===c).map(([,l])=>`<span class="v ${c}">${l}</span>`).join('');
+      return[['Tas esmu es',g('g')],['Dažreiz',g('y')],['Nav par mani',g('r')],['Hobijs',V(S.hobijs)],['Apmeklē',V(S.pulcini)],['Gribētu apmeklēt',V(S.gribetu)],['Pašpārvalde, NVO',V(S.pasparvalde)],['Varētu runāt stundām',V(S.runat)]];}
+    case 'macibas':{const all=[...PRIEKSMETI,...S.prieksmCustom];const f=c=>all.filter(s=>S.prieksmeti[s]===c).map(s=>`<span class="v ${c==='p'?'g':c==='n'?'r':''}">${esc(s)}${S.padodas[s]?' ★':''}</span>`).join('');
+      const pad=all.filter(s=>S.padodas[s]&&!S.prieksmeti[s]).map(s=>`<span class="v">${esc(s)} ★</span>`).join('');
+      return[['Patīk',f('p')],['Nepatīk',f('n')],['Neitrāli',f('x')+pad],['Precizējums',V(S.prieksmPrec)],['Vai vienmēr tā?',V(S.prieksmVienmer)],['Uztvere',V(S.uztvere)],['Pienākumi mājās',V(S.pienakumi)],['Ko vēl varētu darīt',V(S.varetu)]];}
+    case 'prof':return[['Bērnībā',V(S.profBerniba)],['Tagad',V(S.profTagad)],['Ģimenē',V(S.gimProf)],['Ģimenes ietekme',V(S.gimIetekme)],
+      ['Ēnošanas pieredze',S.enots.filter(e=>has(e)).map(e=>`<div><b>${esc(e.p)}</b>${e.pat?' — patika: '+esc(e.pat):''}${e.nep?'; nepatika: '+esc(e.nep):''}</div>`).join('')],
+      ['Algots darbs',V(S.darbs)],['Patika, nepatika',V(S.darbsPat)],['Naudas nozīme',V(S.nauda)]];
+    case 'varoni':{const bk=b=>has(b)?`<b>${esc(b.n)}</b>${b.z?' ('+esc(b.z)+')':''}${b.v?'; varonis: '+esc(b.v):''}${b.kas?'<br>Piesaista: '+esc(b.kas):''}`:'';
+      return[['Rotaļlietas, spēles',V(S.rotallietas)],['Lego',S.lego?LBL[S.lego]+(S.legoKo?'; būvēja: '+esc(S.legoKo):'')+(S.instrukcijas?'; instrukcijas: '+LBL[S.instrukcijas]:''):''],
+        ...S.varoni.map((v,i)=>['Varonis '+(i+1),has(v)?`<b>${esc(v.v)}</b>${v.ip?'<br>Īpašības: '+esc(v.ip):''}${v.kas?'<br>Piesaista: '+esc(v.kas):''}`:'']),
+        ['Grāmata',bk(S.gramata)],['Filma',bk(S.filma)],['Kopīgais (skolēns)',V(S.kopigais)],['Moto',V(S.moto)]];}
+    case 'enu':return[['Vērtības',V(S.vertibas)],['Temperaments',S.temperaments?(TEMPER.find(t=>t[0]===S.temperaments)||['',''])[1]:''],['Testu rezultāti',V(S.testi)],
+      ['Trīs iespējamās profesijas',S.top3.some(has)?S.top3.map((t,i)=>t?`<div>${i+1}. ${esc(t)}${String(i)===S.izvirzita?' <b>★ izvirzīta</b>':''}</div>`:'').join(''):''],['Radošā uzdevuma domas',V(S.sapnis)]];
+    case 'nosl':return[['Vērtējums sākumā',R.S.skalaSak?R.S.skalaSak+' / 10':''],['Vērtējums beigās',R.S.skalaBeig?R.S.skalaBeig+' / 10':'']];
+  }
+  return[];
+}
+function dlHTML(id){return '<dl>'+rows(id).map(([l,v])=>`<dt>${l}</dt><dd>${v||'<span class="empty">—</span>'}</dd>`).join('')+'</dl>';}
+
+/* Iespējamās sakritības */
+const STOP=new Set('arī bija būtu būt esmu viņš viņa viņam viņai tāpēc tāds tāda kaut kurš kura kuru ļoti visu vienmēr jebkurš tikai labi labs laba patīk nepatīk mani manī manas mans mana savu viņu viņiem kāpēc tieši tomēr tiem tās tajā tāpat citu citi citas'.split(' '));
+function stem(w){return w.length>=5?w.slice(0,5):w;}
+function hints(){
+  const S=R.S;const src=[];
+  S.ipasibas.forEach(x=>src.push(['Īpašība',x]));S.prasmes.forEach(x=>src.push(['Prasme',x]));
+  S.varoni.forEach(v=>{if(v.v||v.ip||v.kas)src.push([v.v||'Varonis',v.ip+' '+v.kas]);});
+  if(has(S.gramata))src.push(['Grāmata',S.gramata.v+' '+S.gramata.kas]);
+  if(has(S.filma))src.push(['Filma',S.filma.v+' '+S.filma.kas]);
+  if(S.hobijs)src.push(['Hobijs',S.hobijs]);if(S.runat)src.push(['Varētu runāt stundām',S.runat]);
+  if(S.moto)src.push(['Moto',S.moto]);
+  const map={};
+  src.forEach(([s,t])=>{String(t).toLowerCase().split(/[^a-zāčēģīķļņšūž]+/).filter(w=>w.length>=4&&!STOP.has(w)).forEach(w=>{const k=stem(w);(map[k]=map[k]||{w:new Set(),s:new Set()});map[k].w.add(w);map[k].s.add(s);});});
+  return Object.values(map).filter(m=>m.s.size>=2).sort((a,b)=>b.s.size-a.s.size).slice(0,8);
+}
+function hintsHTML(){
+  const h=hints();
+  const pr=[...PRIEKSMETI,...R.S.prieksmCustom].filter(s=>R.S.prieksmeti[s]==='p');
+  const g=LOMAS.filter(([k])=>R.S.lomas[k]==='g').map(([,l])=>l);
+  let out=`<div class="hints"><b>Iespējamās sakritības</b> <span class="muted">(automātisks ieteikums, tas ir jāpārbauda)</span>`;
+  out+=h.length?`<ul>${h.map(m=>`<li><b>${esc([...m.w].join(', '))}</b>: ${esc([...m.s].join(', '))}</li>`).join('')}</ul>`:'<div class="muted">Sakritības parādīsies, kad skolēns būs aizpildījis īpašību un varoņu sadaļu.</div>';
+  if(pr.length||g.length)out+=`<div style="margin-top:6px">${pr.length?'Patīk: '+esc(pr.join(', '))+'. ':''}${g.length?'Loma grupā: '+esc(g.join(', '))+'.':''}</div>`;
+  return out+'</div>';
+}
+
+/* ============ Konsultanta skats ============ */
+function kView(i){
+  const id=STEPS[i].id;
+  const tb=`<div class="toolbar">
+    <span>Datums <input type="date" data-f="S.datums" value="${esc(R.S.datums)}" style="width:150px"></span>
+    <span>Laiks <input type="time" data-f="S.laiks" value="${esc(R.S.laiks)}" style="width:110px"></span>
+    <span>Konsultācija Nr. <input type="text" data-f="S.nr" value="${esc(R.S.nr)}" style="width:50px"></span>
+    ${MODE==='online'?`<span>Skolēns šobrīd: <b id="stuStep">${esc(STEPS[studentStep].t)}</b></span>
+    <label><input type="checkbox" id="followCb" ${follow?'checked':''}> Sekot skolēnam</label>`:'<span>Darbs bez savienojuma</span>'}
+    <span style="margin-left:auto"></span>
+    <span>Padziļinātā sadaļa:</span>${MODULI.map(([id,t])=>`<label style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-act="mod" data-v="${id}" ${R.K.moduli.includes(id)?'checked':''}> ${esc(t)}</label>`).join('')}
+    <button class="btn small" data-act="code">Ielādēt datu kodu</button>
+    <button class="btn small" data-act="import">Ielādēt skolēna failu</button></div>`;
+  if(id!=='nosl')return tb+`<div class="kgrid">
+    <div class="card ans"><h3>Skolēna atbildes</h3><div id="ans">${dlHTML(id)}</div></div>
+    <div>${id==='varoni'?`<div id="hintBox">${hintsHTML()}</div>`:''}
+      <div class="card">${fld('Manas piezīmes','P.notes.'+id,{area:1,rows:10,hint:'Šīs piezīmes skolēns neredz. Tās tiek iekļautas konsultanta PDF.'})}</div></div></div>`;
+  return tb+`<div class="kgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <div id="hintBox">${hintsHTML()}</div>
+      <div class="card ans" style="margin-bottom:16px"><div id="ans">${dlHTML('nosl')}</div></div>
+      <div class="card">${fld('Kopīgās līnijas un sakritības','P.kopigais',{area:1,rows:3})}
+        ${fld('Secinājumi','P.secinajumi',{area:1,rows:5,hint:'Skolēns to neredz; tiek iekļauts konsultanta PDF.'})}
+        ${fld('Nākamā tikšanās','K.nakama',{ph:'Piemēram, 12. novembrī'})}</div>
+      <div class="actions">
+        <button class="btn primary" data-act="pdfU">Uzdevuma lapa skolēnam</button>
+        <button class="btn primary" data-act="pdfS">Skolēna PDF</button>
+        <button class="btn" data-act="pdfK">Konsultanta PDF</button>
+        <button class="btn" data-act="save">Saglabāt darba failu</button>
+        <button class="btn" data-act="reset">Jauna konsultācija</button></div>
+      <p class="hint">Darba fails ļauj konsultāciju pabeigt vēlāk: tajā ir skolēna atbildes, piezīmes un ieteikumi. To atver ar pogu „Ielādēt skolēna failu”.</p>
+    </div>
+    <div class="card accent"><h3>Ieteikumi skolēnam</h3>
+      <p class="hint" style="margin-top:-4px">Šo sadaļu skolēns neredz. Tā aizpildāma pēc konsultācijas, un lapu var nosūtīt e-klasē.</p>
+      ${fld('Stiprās puses','K.stipras',{area:1,rows:3})}
+      <label class="f">Jomas un profesijas izpētei</label>${tagsW('K.jomas','Ieraksti jomu vai profesiju')}
+      ${fld('Ieteikumi','K.ieteikumi',{area:1,rows:3})}
+      ${fld('Uzdevums skolēnam līdz nākamajai reizei','K.uzdevums',{area:1,rows:3})}
+      ${fld('Ko norunājām','K.norunats',{area:1,rows:2})}
+      <label class="f">Saites uz mācību iestādēm vai profesijām</label>${tagsW('K.linki','Nosaukums un adrese, piemēram: RTU https://www.rtu.lv')}
+      <label class="f">Nākamie soļi</label><div class="checklist" data-w="K.soli">${soliIn()}</div>
+      <label class="f">Noderīgas saites</label><div class="checklist">${RES.map(r=>`<label><input type="checkbox" data-act="res" data-v="${r.id}" ${R.K.resursi.includes(r.id)?'checked':''}> ${esc(r.n)}</label>`).join('')}</div>
+      ${tagsW('K.resCustom','Cita saite: nosaukums un adrese')}
+    </div></div>`;
+}
+function soliIn(){WREG['K.soli']={k:'soli'};return R.K.soli.map((s,i)=>`<label><input type="checkbox" data-act="soli" data-i="${i}" ${s.on?'checked':''}> ${esc(s.t)}</label>`).join('')+
+  `<div class="addrow"><input type="text" placeholder="Cits solis" data-enter><button type="button" class="btn small" data-act="soliadd">Pievienot</button></div>`;}
+
+/* ============ Renderēšana ============ */
+function renderRail(){
+  $('#rail').innerHTML=STEPS.map((s,i)=>`<li><button type="button" data-act="go" data-i="${i}" class="${i===STEP?'cur':''}">${esc(stepTitle(i))}${ROLE==='konsultants'&&MODE==='online'&&i===studentStep?'<span class="here">skolēns</span>':''}</button></li>`).join('');
+}
+function render(){
+  renderRail();
+  const s=STEPS[STEP];
+  let h=`<div class="stephead"><h2>${esc(stepTitle(STEP))}</h2></div>`;
+  h+=ROLE==='skolens'?SVIEW[s.id]():kView(STEP);
+  if(ROLE==='skolens')h+=`<div class="navbar"><button class="btn" data-act="prev" ${STEP===0?'disabled':''}>Atpakaļ</button>${STEP<STEPS.length-1?'<button class="btn primary" data-act="next">Tālāk</button>':'<span></span>'}</div>`;
+  $('#main').innerHTML=h;
+  $('#main').scrollTop=0;window.scrollTo(0,0);
+}
+function goStep(i){
+  STEP=Math.max(0,Math.min(STEPS.length-1,i));render();
+  if(ROLE==='skolens')send({t:'step',n:STEP});
+}
+function refreshAns(){
+  if(ROLE!=='konsultants')return;
+  const a=$('#ans');if(a){a.innerHTML=dlHTML(STEPS[STEP].id);a.classList.remove('flash');void a.offsetWidth;a.classList.add('flash');}
+  const hb=$('#hintBox');if(hb)hb.innerHTML=hintsHTML();
+}
+
+/* ============ Notikumi ============ */
+let sendT={};
+function changed(path){
+  if(ROLE==='skolens'&&path.startsWith('S.'))queue('s');
+
+  if(ROLE==='konsultants'&&path.startsWith('S.'))send({t:'sf',f:path,v:getP(R,path)});
+}
+function queue(kind){clearTimeout(sendT[kind]);sendT[kind]=setTimeout(()=>send(kind==='s'?{t:'s',s:R.S}:{t:'k',k:R.K}),250);}
+
+document.addEventListener('input',e=>{
+  const f=e.target.closest('[data-f]');if(!f)return;
+  setP(R,f.dataset.f,f.value);changed(f.dataset.f);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.matches('[data-enter]')){e.preventDefault();const b=e.target.parentElement.querySelector('button');b&&b.click();}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='followCb'){follow=e.target.checked;if(follow)goStep(studentStep);}
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,p=b.dataset.p;
+  switch(a){
+    case 'go':{if(ROLE==='konsultants'&&follow){follow=false;const cb=$('#followCb');if(cb)cb.checked=false;}goStep(+b.dataset.i);break;}
+    case 'next':goStep(STEP+1);break;
+    case 'prev':goStep(STEP-1);break;
+    case 'chip':{const arr=getP(R,p)||[];const v=b.dataset.v;const i=arr.indexOf(v);
+      if(i>=0)arr.splice(i,1);else if(arr.length<WREG[p].max)arr.push(v);setP(R,p,arr);rerender(p);changed(p);break;}
+    case 'chipadd':{const inp=b.parentElement.querySelector('input');const v=inp.value.trim();const arr=getP(R,p)||[];
+      if(v&&!arr.includes(v)&&arr.length<WREG[p].max){arr.push(v);setP(R,p,arr);rerender(p);changed(p);const ni=document.querySelector(`[data-w="${p}"] input`);ni&&ni.focus();}break;}
+    case 'tagadd':{const inp=b.parentElement.querySelector('input');const v=inp.value.trim();const arr=getP(R,p)||[];
+      if(v&&!arr.includes(v)){arr.push(v);setP(R,p,arr);rerender(p);changed(p);}const ni=document.querySelector(`[data-w="${p}"] input`);ni&&ni.focus();break;}
+    case 'tagdel':{const arr=getP(R,p);arr.splice(+b.dataset.i,1);rerender(p);changed(p);break;}
+    case 'seg':{const cur=String(getP(R,p)??'');setP(R,p,cur===b.dataset.v?'':b.dataset.v);rerender(p);changed(p);
+      if(p==='S.testLen'&&!getP(R,p))setP(R,p,'pilns');break;}
+    case 'scale':{const v=+b.dataset.v;setP(R,p,getP(R,p)===v?0:v);rerender(p);changed(p);break;}
+    case 'st':{const k=b.dataset.k;R.S.stils[k]=R.S.stils[k]===b.dataset.v?'':b.dataset.v;rerender('S.stils');updTest();changed('S.');break;}
+    case 'ms':{const k=b.dataset.k;R.S.macStils[k]=R.S.macStils[k]===b.dataset.v?'':b.dataset.v;rerender('S.macStils');updTest();changed('S.');break;}
+    case 'mod':{const id=b.dataset.v;const a=R.K.moduli;const i=a.indexOf(id);
+      if(b.checked&&i<0)a.push(id);if(!b.checked&&i>=0)a.splice(i,1);send({t:'mod',v:a});if(STEPS[STEP].id==='modulis')render();break;}
+    case 'ri':{const k=b.dataset.k;R.S.riasec[k]=R.S.riasec[k]===b.dataset.v?'':b.dataset.v;rerender('S.riasec');updTest();changed('S.');break;}
+    case 'sk':{const s=b.dataset.s;R.S.prasmesT[s]=R.S.prasmesT[s]===b.dataset.v?'':b.dataset.v;rerender('S.prasmesT');updTest();changed('S.');break;}
+    case 'subj':{const s=b.dataset.s;R.S.prieksmeti[s]=R.S.prieksmeti[s]===b.dataset.v?'':b.dataset.v;rerender('S.prieksmeti');changed('S.');break;}
+    case 'star':{const s=b.dataset.v;R.S.padodas[s]=!R.S.padodas[s];rerender('S.prieksmeti');changed('S.');break;}
+    case 'subjadd':{const inp=b.parentElement.querySelector('input');const v=inp.value.trim();
+      if(v&&!PRIEKSMETI.includes(v)&&!R.S.prieksmCustom.includes(v)){R.S.prieksmCustom.push(v);rerender('S.prieksmeti');changed('S.');}break;}
+    case 'soli':R.K.soli[+b.dataset.i].on=b.checked;changed('K.');break;
+    case 'soliadd':{const inp=b.parentElement.querySelector('input');const v=inp.value.trim();
+      if(v){R.K.soli.push({t:v,on:true});document.querySelector('[data-w="K.soli"]').innerHTML=soliIn();changed('K.');}break;}
+    case 'res':{const id=b.dataset.v;const arr=R.K.resursi;const i=arr.indexOf(id);if(b.checked&&i<0)arr.push(id);if(!b.checked&&i>=0)arr.splice(i,1);changed('K.');break;}
+    case 'pdfS':printDoc('s');break;
+    case 'pdfK':printDoc('k');break;
+    case 'pdfU':printDoc('u');break;
+    case 'export':exportFile();break;
+    case 'save':exportFile(true);break;
+    case 'code':{const v=prompt('Ielīmē skolēna datu kodu (sākas ar KK):');if(v&&v.trim())loadCode(v.trim()).then(ok=>{if(ok)send({t:'restore',s:R.S});});break;}
+    case 'import':$('#fileIn').click();break;
+    case 'reset':if(confirm('Sākt jaunu konsultāciju? Visi ievadītie dati tiks dzēsti. Vai PDF faili ir saglabāti?')){R.S=newS();const keep={konsultants:R.K.konsultants,amats:R.K.amats,skola:R.K.skola};R.K=Object.assign(newK(),keep);R.P=newP();send({t:'restore',s:R.S});send({t:'mod',v:R.K.moduli});goStep(0);}break;
+  }
+});
+
+/* ============ Savienojums ============ */
+function setConn(state,text){
+  $('#connDot').className='dot'+(state?' '+state:'');$('#connText').textContent=text;
+  $('#btnReconnect').style.display=(ROLE==='skolens'&&MODE==='online'&&state!=='on'&&CODE)?'':'none';
+}
+function genCode(){const a='ABCDEFGHJKLMNPRSTUVZ23456789';let c='';for(let i=0;i<5;i++)c+=a[Math.floor(Math.random()*a.length)];return c;}
+function peerOk(){return typeof window.Peer==='function';}
+function send(msg){if(conn&&conn.open){try{conn.send(msg);}catch(e){}}}
+
+function host(){
+  if(!peerOk()){$('#hostMsg').textContent='Neizdevās ielādēt savienojuma bibliotēku. Pārbaudi interneta savienojumu vai strādā bez savienojuma.';return;}
+  $('#hostMsg').textContent='';
+  CODE=genCode();
+  peer=new Peer(PREFIX+CODE,{debug:0});
+  setConn('wait','Veido savienojumu…');
+  peer.on('open',()=>{$('#codeShow').textContent=CODE;$('#codeWrap').style.display='';setConn('wait','Gaida skolēnu');});
+  peer.on('connection',c=>{if(conn&&conn!==c){try{conn.close();}catch(e){}}conn=c;wire(c);});
+  peer.on('disconnected',()=>{setConn('wait','Atjauno savienojumu…');setTimeout(()=>{if(peer&&!peer.destroyed)peer.reconnect();},2000);});
+  peer.on('error',err=>{
+    if(err.type==='unavailable-id'){peer.destroy();host();return;}
+    setConn('err','Savienojuma kļūda');
+    $('#hostMsg').textContent='Kļūda: '+err.type+'. Var strādāt bez savienojuma.';
+  });
+  enterApp('konsultants','online');
+}
+function join(code){
+  if(!peerOk()){$('#joinMsg').textContent='Neizdevās ielādēt savienojuma bibliotēku. Pārbaudi interneta savienojumu vai strādā bez savienojuma.';return;}
+  CODE=code;
+  if(peer&&!peer.destroyed){try{peer.destroy();}catch(e){}}
+  peer=new Peer({debug:0});
+  setConn('wait','Savienojas…');
+  const to=setTimeout(()=>{if(!(conn&&conn.open)){fail('Neizdevās savienoties. Pārbaudi kodu.');}},12000);
+  peer.on('open',()=>{const c=peer.connect(PREFIX+code,{reliable:true});conn=c;wire(c,to);});
+  peer.on('error',err=>{clearTimeout(to);fail(err.type==='peer-unavailable'?'Tāds kods netika atrasts. Pārbaudi kodu karjeras konsultantes ekrānā.':'Savienojuma kļūda: '+err.type);});
+}
+function fail(t){
+  if(ROLE==='skolens'){setConn('err','Nav savienojuma');scheduleRetry();}
+  else{$('#joinMsg').textContent=t;setConn('err','Nav savienojuma');}
+}
+function scheduleRetry(){
+  clearTimeout(retryTimer);
+  if(retry>=10)return;
+  retry++;retryTimer=setTimeout(()=>join(CODE),4000);
+}
+function wire(c,to){
+  c.on('open',()=>{
+    clearTimeout(to);retry=0;
+    setConn('on','Savienots');
+    if(ROLE==='skolens'||(!ROLE)){ if(!ROLE)enterApp('skolens','online'); send({t:'hello',s:R.S,n:STEP}); }
+    
+  });
+  c.on('data',onData);
+  c.on('close',()=>{
+    if(conn!==c)return;conn=null;
+    if(ROLE==='skolens'){setConn('err','Savienojums pārtraukts');scheduleRetry();}
+    else setConn('wait','Gaida skolēnu');
+  });
+  c.on('error',()=>{});
+}
+function isEmptyS(s){const a=JSON.parse(JSON.stringify(s));const b=newS();a.datums=b.datums;return JSON.stringify(a)===JSON.stringify(b);}
+function onData(m){
+  if(!m||typeof m!=='object')return;
+  if(ROLE==='konsultants'){
+    if(m.t==='hello'){
+      if(isEmptyS(m.s)&&!isEmptyS(R.S))send({t:'restore',s:R.S});else{R.S=m.s;}
+      setStudentStep(m.n||0);refreshAns();
+    }
+    else if(m.t==='s'){R.S=m.s;refreshAns();}
+    else if(m.t==='step'){setStudentStep(m.n);}
+  }else{
+    if(m.t==='mod'){R.K.moduli=m.v;if(STEPS[STEP].id==='modulis')render();}
+    else if(m.t==='restore'){R.S=m.s;render();}
+    else if(m.t==='sf'){setP(R,m.f,m.v);if(STEPS[STEP].id==='sakums')render();}
+  }
+}
+function setStudentStep(n){
+  studentStep=n;
+  if(follow&&STEP!==n){STEP=n;render();}
+  else{renderRail();const s=$('#stuStep');if(s)s.textContent=STEPS[n].t;}
+}
+
+/* ============ Režīmi ============ */
+function enterApp(role,mode){
+  ROLE=role;MODE=mode;
+  $('#start').style.display='none';$('#app').style.display='grid';
+  $('#roleLabel').textContent=role==='skolens'?'Skolēna skats':'Konsultanta skats';
+  const sw=$('#btnSwitch');
+  if(mode==='offline'){sw.style.display='';sw.textContent=role==='skolens'?'Pāriet uz konsultanta skatu':'Pāriet uz skolēna skatu';}
+  else sw.style.display='none';
+  if(role==='konsultants'){
+    R.K.konsultants=$('#setName').value.trim();R.K.amats=$('#setRole').value.trim();R.K.skola=$('#setSchool').value.trim();
+  }
+  if(mode==='offline')setConn('','Bez savienojuma');
+  render();
+}
+$('#btnCode').onclick=async()=>{
+  const v=$('#codeIn').value.trim();if(!v)return;
+  const ok=await loadCode(v);
+  $('#codeMsg').textContent=ok?('Ielādēts: '+((R.S.name||'skolēna anketa'))):'';
+};
+$('#btnHost').onclick=host;
+$('#btnConsOffline').onclick=()=>enterApp('konsultants','offline');
+$('#btnStudentOffline').onclick=()=>enterApp('skolens','offline');
+$('#btnJoin').onclick=()=>{const c=$('#joinCode').value.trim().toUpperCase();if(c.length!==5){$('#joinMsg').textContent='Kodā jābūt piecām zīmēm.';return;}$('#joinMsg').textContent='';join(c);};
+$('#joinCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('#btnJoin').click();});
+$('#btnReconnect').onclick=()=>{retry=0;join(CODE);};
+$('#btnSwitch').onclick=()=>{
+  if(ROLE==='skolens'){if(!confirm('Pāriet uz konsultanta skatu šajā datorā?'))return;ROLE='konsultants';}
+  else ROLE='skolens';
+  $('#roleLabel').textContent=ROLE==='skolens'?'Skolēna skats':'Konsultanta skats';
+  $('#btnSwitch').textContent=ROLE==='skolens'?'Pāriet uz konsultanta skatu':'Pāriet uz skolēna skatu';
+  render();
+};
+
+/* ============ Fails ============ */
+function fileBase(){return (R.S.name||'skolens').trim().replace(/\s+/g,'_').replace(/[\\/:*?"<>|]/g,'');}
+function exportFile(full){
+  const data=full?{v:1,kind:'karjeras-kompass',s:R.S,k:R.K,p:R.P}:{v:1,kind:'karjeras-kompass',s:R.S};
+  const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(full?'konsultacija_':'karjeras_kompass_')+fileBase()+'_'+(R.S.datums||today())+'.json';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+$('#fileIn').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(d.kind!=='karjeras-kompass'||!d.s)throw 0;
+      if(!isEmptyS(R.S)&&!confirm('Aizstāt pašreizējās skolēna atbildes ar faila saturu?'))return;
+      R.S=Object.assign(newS(),d.s);
+      if(d.k)R.K=Object.assign(newK(),d.k);
+      if(d.p)R.P=Object.assign(newP(),d.p);
+      render();}
+    catch(err){alert('Šis nav Karjeras kompasa fails.');}};
+  rd.readAsText(f);e.target.value='';
+});
+
+/* ============ Datu kods ============ */
+function b64(u8){let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s);}
+function unb64(s){const bin=atob(s);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;}
+async function makeCode(obj){
+  const bytes=new TextEncoder().encode(JSON.stringify(obj));
+  if(window.CompressionStream){
+    const st=new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return 'KK1'+b64(new Uint8Array(await new Response(st).arrayBuffer()));
+  }
+  return 'KK0'+b64(bytes);
+}
+async function readCode(code){
+  const c=code.replace(/\s+/g,'');
+  if(!/^KK[01]/.test(c))throw new Error('format');
+  const u=unb64(c.slice(3));
+  let json;
+  if(c.slice(0,3)==='KK1'){
+    const st=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    json=new TextDecoder().decode(new Uint8Array(await new Response(st).arrayBuffer()));
+  }else json=new TextDecoder().decode(u);
+  const d=JSON.parse(json);
+  if(!d.s)throw new Error('format');
+  return d.s;
+}
+async function loadCode(code){
+  try{
+    const s=await readCode(code);
+    if(!isEmptyS(R.S)&&!confirm('Aizstāt pašreizējās skolēna atbildes ar datu koda saturu?'))return false;
+    R.S=Object.assign(newS(),s);
+    if(ROLE)render();
+    return true;
+  }catch(e){alert('Šis nav derīgs Karjeras kompasa datu kods. Pārbaudi, vai ir nokopēts viss teksts, kas sākas ar KK.');return false;}
+}
+
+/* ============ PDF ============ */
+function printDoc(kind){
+  const S=R.S,K=R.K;
+  const who=[S.name,S.klase?S.klase+' klase':'',[fmtDate(S.datums),S.laiks?'plkst. '+S.laiks:''].filter(Boolean).join(' '),S.nr?S.nr+'. konsultācija':''].filter(Boolean).map(esc).join(', ');
+  const kons=[K.konsultants,K.amats,K.skola].filter(Boolean).map(esc).join(', ');
+  let h='';
+  if(kind==='s'){
+    const top=S.top3.map((t,i)=>t?`<li>${esc(t)}${String(i)===S.izvirzita?' <b>★ Ēnu dienai</b>':''}</li>`:'').join('');
+    const soli=K.soli.filter(s=>s.on);const res=resList();
+    const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
+    h=`<div class="p-head"><h1>Mans karjeras kompass</h1><div>${who}</div></div>
+      <div class="p-cols">
+        <div class="p-sec"><h2>Mana vizītkarte</h2>${dl([['Īpašības',V(S.ipasibas)],['Prasmes',V(S.prasmes)],['Vērtības',V(S.vertibas)],['Temperaments',S.temperaments&&S.temperaments!=='nezinu'?(TEMPER.find(t=>t[0]===S.temperaments)||['',''])[1]:''],['Trīs iespējamās profesijas',top?`<ul>${top}</ul>`:'']])}</div>
+        <div class="p-sec"><h2>Manas intereses</h2>${(()=>{const r=riScore(),sk=skLists();
+          return dl([['Spēcīgākie tipi',r.done?r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
+            ['Profesiju piemēri',r.done?esc(r.arr.slice(0,3).map(x=>TIPI[x.c].p.slice(0,4).join(', ')).join('; ')):''],
+            ['Labi padodas',V(sk.l)],['Vēl jāmācās',V(sk.j)],
+            ['Darba stils',V(stilsProfile())],['Mācos vieglāk',macResult()?esc(macResult().top.join(' un ')):'']]);})()}</div>
+        <div class="p-sec"><h2>Mans ceļš</h2>${dl([['Bērnībā gribēju kļūt',V(S.profBerniba)],['Tagad mani interesē',V(S.profTagad)],['Patīk mācīties',V([...PRIEKSMETI,...S.prieksmCustom].filter(s=>S.prieksmeti[s]==='p'))],['Man padodas',V([...PRIEKSMETI,...S.prieksmCustom].filter(s=>S.padodas[s]))],['Mans moto',V(S.moto)]])}</div>
+      </div>
+      ${has(K.stipras)||K.jomas.length||has(K.ieteikumi)||has(K.uzdevums)||has(K.norunats)?`<div class="p-sec"><h2>Konsultanta ieteikumi</h2><div class="p-box">${dl([['Stiprās puses',V(K.stipras)],['Jomas izpētei',V(K.jomas)],['Ieteikumi',V(K.ieteikumi)],['Uzdevums',V(K.uzdevums)],['Ko norunājām',V(K.norunats)]])}</div></div>`:''}
+      <div class="p-cols">
+        ${soli.length?`<div class="p-sec"><h2>Mani nākamie soļi</h2>${soli.map(s=>`<div style="padding:2px 0"><span class="cb"></span>${esc(s.t)}</div>`).join('')}</div>`:''}
+        ${res.length||linkList2().length?`<div class="p-sec p-link"><h2>Noderīgas saites</h2><ul>${[...linkList2(),...res].map(r=>`<li>${r.u?`<a href="${esc(r.u)}">${esc(r.n)}</a><br><span style="font-size:9pt">${esc(r.u)}</span>`:esc(r.n)}</li>`).join('')}</ul></div>`:''}
+      </div>
+      <div class="p-sec"><h2>Cik skaidri redzu savu nākotni</h2>Konsultācijas sākumā: <b>${S.skalaSak||'—'} / 10</b>. Konsultācijas beigās: <b>${S.skalaBeig||'—'} / 10</b>.${K.nakama?` Nākamā tikšanās: <b>${esc(K.nakama)}</b>.`:''}</div>
+      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
+  }else if(kind==='u'){
+    const soli=K.soli.filter(s=>s.on);const res=resList();const lnk=linkList2();
+    const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
+    h=`<div class="p-head"><h1>Mans uzdevums līdz nākamajai reizei</h1><div>${who}</div></div>
+      ${has(K.uzdevums)?`<div class="p-sec"><h2>Uzdevums</h2><div class="p-box">${nl(K.uzdevums)}</div></div>`:''}
+      ${has(K.norunats)?`<div class="p-sec"><h2>Ko norunājām</h2><div class="p-box">${nl(K.norunats)}</div></div>`:''}
+      ${soli.length?`<div class="p-sec"><h2>Nākamie soļi</h2>${soli.map(s=>`<div style="padding:2px 0"><span class="cb"></span>${esc(s.t)}</div>`).join('')}</div>`:''}
+      ${lnk.length||res.length?`<div class="p-sec p-link"><h2>Saites</h2><ul>${[...lnk,...res].map(r=>`<li>${r.u?`<a href="${esc(r.u)}">${esc(r.n)}</a><br><span style="font-size:9pt">${esc(r.u)}</span>`:esc(r.n)}</li>`).join('')}</ul></div>`:''}
+      ${dl([['Jomas izpētei',V(K.jomas)],['Nākamā tikšanās',V(K.nakama)]])}
+      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
+  }else{
+    h=`<div class="p-head"><h1>Individuālā karjeras konsultācija</h1><div>${who}</div></div>`+
+      STEPS.slice(0,STEPS.length-1).map(s=>{const n=R.P.notes[s.id];return `<div class="p-sec"><h2>${esc(s.t)}</h2>${dlHTML(s.id)}${has(n)?`<div class="p-notes"><b>Piezīmes:</b> ${nl(n)}</div>`:''}</div>`;}).join('')+
+      `<div class="p-sec"><h2>Secinājumi</h2><dl>${[['Vērtējums',`${S.skalaSak||'—'} → ${S.skalaBeig||'—'} / 10`],['Kopīgās līnijas',V(R.P.kopigais)],['Secinājumi',V(R.P.secinajumi)],['Stiprās puses',V(K.stipras)],['Jomas izpētei',V(K.jomas)],['Ieteikumi',V(K.ieteikumi)],['Uzdevums skolēnam',V(K.uzdevums)],['Ko norunājām',V(K.norunats)],['Nākamie soļi',K.soli.filter(s=>s.on).map(s=>`<div>${esc(s.t)}</div>`).join('')],['Saites',resList().map(r=>`<div>${esc(r.n)}</div>`).join('')],['Nākamā tikšanās',V(K.nakama)]].map(([l,v])=>`<dt>${l}</dt><dd>${v||'<span class="empty">—</span>'}</dd>`).join('')}</dl></div>
+      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}. Dokuments satur personas datus, glabājams atbilstoši skolas datu apstrādes kārtībai.<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
+  }
+  $('#print').innerHTML=h;
+  const old=document.title;
+  document.title=(kind==='s'?'Karjeras_kompass_':kind==='u'?'Uzdevums_':'Konsultacija_')+fileBase()+'_'+(S.datums||today())+(S.nr?('_Nr'+S.nr):'');
+  setTimeout(()=>{window.print();document.title=old;},50);
+}
+
+/* ============ Brīdinājums pirms aizvēršanas ============ */
+window.addEventListener('beforeunload',e=>{if(ROLE&&!isEmptyS(R.S)){e.preventDefault();e.returnValue='';}});
+</script>
+</body>
+</html>
