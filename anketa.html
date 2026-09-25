@@ -304,11 +304,11 @@ const PRASMJU_TESTS = [
  ['Ievērot precizitāti un kārtību',0],['Vadīt un organizēt citus',0]
 ];
 const IEPAZ = [
- ['iep1','Ko Tu dari, kad esi brīvs?'],
- ['iep2','Ko Tu darītu, ja rīt būtu pilnīgi brīva diena?'],
- ['iep3','Kurš cilvēks Tev ir paraugs un kāpēc?'],
- ['iep4','Kas skolā Tev sagādā prieku?'],
- ['iep5','Kas Tevi visvairāk nogurdina?']
+ ['iep1','Kuras mācības skolā Tev sanāk vislabāk un kāpēc?'],
+ ['iep2','Kas Tevi visvairāk nogurdina — gan skolā, gan ārpus tās?'],
+ ['iep3','Ar ko Tu aizraujies brīvajā laikā?'],
+ ['iep4','Ko Tu darītu, ja rīt būtu pilnīgi brīva diena?'],
+ ['iep5','Kā Tu redzi savu nākotni pēc 10 gadiem?']
 ];
 const STILS = [
  ['ritms','Vislabāk strādāju no rīta','Vislabāk strādāju vakarā'],
@@ -415,6 +415,24 @@ function stilsResHTML(){
     <p class="hint">Šeit nav ne laba, ne slikta rezultāta. Tas parāda, kādi darba apstākļi Tev der vislabāk.</p>`;
 }
 function b64(u8){let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s);}
+function packAns(o,keys,alpha){return keys.map(k=>{const i=alpha.indexOf(o[k]);return i<0?'0':String(i+1);}).join('');}
+function unpackAns(s,keys,alpha){const o={};String(s||'').split('').forEach((c,i)=>{const n=+c;if(n>=1&&n<=3&&keys[i]!==undefined)o[keys[i]]=alpha[n-1];});return o;}
+const RIKEY=RIASEC.map((_,i)=>i), SKKEY=PRASMJU_TESTS.map(x=>x[0]), STKEY=STILS.map(x=>x[0]), MSKEY=MACST.map((_,i)=>i);
+function compactS(S){return{v:2,
+  n:S.name||'',k:S.klase||'',d:S.datums||'',g:S.gaidas||'',
+  q:IEPAZ.map(([id])=>S[id]||''),
+  t:S.testLen==='iss'?0:1,
+  r:packAns(S.riasec||{},RIKEY,['p','x','n']),
+  s:packAns(S.prasmesT||{},SKKEY,['l','v','j']),
+  w:packAns(S.stils||{},STKEY,['a','v','b']),
+  m:packAns(S.macStils||{},MSKEY,['p','x','n'])};}
+function expandS(d){const S={name:d.n||'',klase:d.k||'',datums:d.d||'',gaidas:d.g||'',
+  testLen:d.t?'pilns':'iss',
+  riasec:unpackAns(d.r,RIKEY,['p','x','n']),
+  prasmesT:unpackAns(d.s,SKKEY,['l','v','j']),
+  stils:unpackAns(d.w,STKEY,['a','v','b']),
+  macStils:unpackAns(d.m,MSKEY,['p','x','n'])};
+  IEPAZ.forEach(([id],i)=>S[id]=(d.q&&d.q[i])||'');return S;}
 async function makeCode(obj){
   const bytes=new TextEncoder().encode(JSON.stringify(obj));
   if(window.CompressionStream){
@@ -447,7 +465,7 @@ const VIEW={
   <div class="grid2">
     <div class="card">${fld('Vārds, uzvārds','S.name')}
       <div class="grid2" style="gap:12px"><div>${fld('Klase','S.klase',{ph:'8.b'})}</div><div>${fld('Datums','S.datums',{type:'date'})}</div></div>
-      ${fld('Ko Tu gaidi no konsultācijas?','S.gaidas',{area:1,rows:3})}</div>
+      ${fld('Kāds ir Tavs galvenais jautājums, ko vēlies uzdot karjeras konsultantei?','S.gaidas',{area:1,rows:3})}</div>
     <div class="card accent"><h3>Iepazīsimies</h3>
       ${IEPAZ.map(([k,q])=>fld(q,'S.'+k,{area:1,rows:2})).join('')}</div>
   </div>`,
@@ -480,7 +498,7 @@ const VIEW={
       <button class="btn primary" data-act="pdf">Saglabāt PDF</button>
       <p class="hint">Drukas logā izvēlies „Saglabāt kā PDF”.</p></div>
     <div class="card"><h3>2. Nosūti kodu konsultantei</h3>
-      <p>Nospied pogu, nokopē kodu un ielīmē to e-klases vēstulē karjeras konsultantei Jolantai. Kods satur Tavas atbildes.</p>
+      <p>Nospied pogu „Izveidot kodu”, tad „Kopēt kodu”. Kods satur Tavas atbildes.</p><p>Pēc tam atver e-klases vēstuli karjeras konsultantei Jolantai un ielīmē kodu, turot nospiestu taustiņu <b>Ctrl</b> un piespiežot <b>V</b>.</p>
       <button class="btn" data-act="code">Izveidot kodu</button>
       <button class="btn" data-act="copy" id="btnCopy" style="display:none">Kopēt kodu</button>
       <textarea id="codeOut" rows="5" readonly style="margin-top:10px;display:none"></textarea>
@@ -513,9 +531,9 @@ document.addEventListener('click',async e=>{
     case 'pdf':printDoc();break;
     case 'code':{
       if(!R.S.name.trim()){alert('Vispirms 1. solī ieraksti savu vārdu un uzvārdu.');go(0);break;}
-      const c=await makeCode({v:1,kind:'karjeras-kompass',s:R.S});
+      const c=await makeCode(compactS(R.S));
       const ta=$('#codeOut');ta.style.display='';ta.value=c;$('#btnCopy').style.display='';ta.select();break;}
-    case 'copy':{const ta=$('#codeOut');ta.select();document.execCommand('copy');$('#copyMsg').textContent='Kods nokopēts. Ielīmē to vēstulē karjeras konsultantei.';break;}
+    case 'copy':{const ta=$('#codeOut');ta.select();document.execCommand('copy');$('#copyMsg').textContent='Kods nokopēts. Atver e-klases vēstuli un ielīmē to ar Ctrl + V.';break;}
   }
 });
 $('#btnGo').onclick=()=>{$('#start').style.display='none';$('#app').style.display='grid';render();};
@@ -526,7 +544,7 @@ function printDoc(){
   const S=R.S,r=riScore(),sk=skLists(),m=macResult();
   const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
   $('#print').innerHTML=`<div class="p-head"><h1>Karjeras anketa</h1><div>${[S.name,S.klase?S.klase+' klase':'',fmtDate(S.datums)].filter(Boolean).map(esc).join(', ')}</div></div>
-   <div class="p-sec"><h2>Par mani</h2>${dl([['Gaidas no konsultācijas',V(S.gaidas)],...IEPAZ.map(([k,q])=>[q,V(S[k])])])}</div>
+   <div class="p-sec"><h2>Par mani</h2>${dl([['Galvenais jautājums',V(S.gaidas)],...IEPAZ.map(([k,q])=>[q,V(S[k])])])}</div>
    <div class="p-sec"><h2>Interešu tests</h2>${dl([['Testa apjoms',S.testLen==='iss'?'Īsais':'Pilnais'],['Atbildēts',r.done+' no '+r.total],
      ['Spēcīgākie tipi',r.done?r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
      ['Visi tipi',r.done?r.arr.map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
