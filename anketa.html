@@ -421,12 +421,12 @@ const RIKEY=RIASEC.map((_,i)=>i), SKKEY=PRASMJU_TESTS.map(x=>x[0]), STKEY=STILS.
 function compactS(S){return{v:2,
   n:S.name||'',k:S.klase||'',d:S.datums||'',g:S.gaidas||'',
   q:IEPAZ.map(([id])=>S[id]||''),
-  t:S.testLen==='iss'?0:1,
+  t:S.testLen==='iss'?0:1,x:S.skalaSak||0,
   r:packAns(S.riasec||{},RIKEY,['p','x','n']),
   s:packAns(S.prasmesT||{},SKKEY,['l','v','j']),
   w:packAns(S.stils||{},STKEY,['a','v','b']),
   m:packAns(S.macStils||{},MSKEY,['p','x','n'])};}
-function expandS(d){const S={name:d.n||'',klase:d.k||'',datums:d.d||'',gaidas:d.g||'',
+function expandS(d){const S={name:d.n||'',klase:d.k||'',datums:d.d||'',gaidas:d.g||'',skalaSak:+d.x||0,
   testLen:d.t?'pilns':'iss',
   riasec:unpackAns(d.r,RIKEY,['p','x','n']),
   prasmesT:unpackAns(d.s,SKKEY,['l','v','j']),
@@ -446,9 +446,11 @@ function rerender(path){
   const f={chips:chipsIn,tags:tagsIn,seg:segIn,scale:scaleIn,light:lightIn,subj:subjIn,ri:riIn,sk:skIn,stils:stilsIn,mac:macIn}[w.k];
   el.innerHTML=f(path);
 }
-var chipsIn,tagsIn,lightIn,subjIn,scaleIn; // netiek lietoti šajā failā
+function scaleIn(path){const v=getP(R,path);let h='<div class="scale">';for(let i=1;i<=10;i++)h+=`<button type="button" class="${v===i?'on':''}" data-act="scale" data-p="${path}" data-v="${i}">${i}</button>`;return h+`</div><div class="scale-ends"><span>${WREG[path].lo}</span><span>${WREG[path].hi}</span></div>`;}
+function scaleW(path,lo,hi){WREG[path]={k:'scale',lo,hi};return `<div data-w="${path}">${scaleIn(path)}</div>`;}
+var chipsIn,tagsIn,lightIn,subjIn; // netiek lietoti šajā failā
 const STEPS=[{id:'sakums',t:'Par mani'},{id:'tests',t:'Interešu tests'},{id:'stils',t:'Darba stils un ritms'},{id:'beigas',t:'Nosūtīšana'}];
-function newS(){return{name:'',klase:'',datums:today(),iep1:'',iep2:'',iep3:'',iep4:'',iep5:'',gaidas:'',
+function newS(){return{name:'',klase:'',datums:today(),skalaSak:0,iep1:'',iep2:'',iep3:'',iep4:'',iep5:'',gaidas:'',
  testLen:'pilns',riasec:{},prasmesT:{},stils:{},macStils:{},top3:[]};}
 const R={S:newS()};
 const WREG={};
@@ -465,7 +467,8 @@ const VIEW={
   <div class="grid2">
     <div class="card">${fld('Vārds, uzvārds','S.name')}
       <div class="grid2" style="gap:12px"><div>${fld('Klase','S.klase',{ph:'8.b'})}</div><div>${fld('Datums','S.datums',{type:'date'})}</div></div>
-      ${fld('Kāds ir Tavs galvenais jautājums, ko vēlies uzdot karjeras konsultantei?','S.gaidas',{area:1,rows:3})}</div>
+      ${fld('Kāds ir Tavs galvenais jautājums, ko vēlies uzdot karjeras konsultantei?','S.gaidas',{area:1,rows:3})}
+      <label class="f">Cik skaidri Tu šobrīd zini, ko vēlies darīt nākotnē?</label>${scaleW('S.skalaSak','Nemaz nezinu','Zinu pilnīgi droši')}</div>
     <div class="card accent"><h3>Iepazīsimies</h3>
       ${IEPAZ.map(([k,q])=>fld(q,'S.'+k,{area:1,rows:2})).join('')}</div>
   </div>`,
@@ -523,6 +526,7 @@ document.addEventListener('click',async e=>{
     case 'go':go(+b.dataset.i);break;
     case 'next':go(STEP+1);break;
     case 'prev':go(STEP-1);break;
+    case 'scale':{const v=+b.dataset.v;setP(R,p,getP(R,p)===v?0:v);rerender(p);break;}
     case 'seg':{const cur=String(getP(R,p)??'');setP(R,p,cur===b.dataset.v?'':b.dataset.v);rerender(p);if(p==='S.testLen'){if(!getP(R,p))setP(R,p,'pilns');render();}break;}
     case 'ri':{const k=b.dataset.k;R.S.riasec[k]=R.S.riasec[k]===b.dataset.v?'':b.dataset.v;rerender('S.riasec');updTest();break;}
     case 'sk':{const s=b.dataset.s;R.S.prasmesT[s]=R.S.prasmesT[s]===b.dataset.v?'':b.dataset.v;rerender('S.prasmesT');updTest();break;}
@@ -544,7 +548,7 @@ function printDoc(){
   const S=R.S,r=riScore(),sk=skLists(),m=macResult();
   const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
   $('#print').innerHTML=`<div class="p-head"><h1>Karjeras anketa</h1><div>${[S.name,S.klase?S.klase+' klase':'',fmtDate(S.datums)].filter(Boolean).map(esc).join(', ')}</div></div>
-   <div class="p-sec"><h2>Par mani</h2>${dl([['Galvenais jautājums',V(S.gaidas)],...IEPAZ.map(([k,q])=>[q,V(S[k])])])}</div>
+   <div class="p-sec"><h2>Par mani</h2>${dl([['Galvenais jautājums',V(S.gaidas)],['Cik skaidri zinu nākotni',S.skalaSak?S.skalaSak+' / 10':''],...IEPAZ.map(([k,q])=>[q,V(S[k])])])}</div>
    <div class="p-sec"><h2>Interešu tests</h2>${dl([['Testa apjoms',S.testLen==='iss'?'Īsais':'Pilnais'],['Atbildēts',r.done+' no '+r.total],
      ['Spēcīgākie tipi',r.done?r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
      ['Visi tipi',r.done?r.arr.map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
