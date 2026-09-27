@@ -182,7 +182,6 @@ input:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 
 @media print{
   body{display:block;overflow:visible;height:auto}
   .top{display:none !important}
-  @page{size:A4 portrait;margin:13mm 14mm}
   body{background:#fff;font-size:10.5pt}
   body > *:not(#print){display:none !important}
   #print{display:block}
@@ -205,6 +204,10 @@ input:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 
   .cb{display:inline-block;width:10pt;height:10pt;border:1.2px solid var(--ink);margin-right:6px;vertical-align:-1pt}
   a{color:var(--ink);text-decoration:none}
   .p-link a{color:#1F4E79;text-decoration:underline}
+  table.cmp{border-collapse:collapse;width:100%;font-size:8.5pt;margin-top:8px}
+  table.cmp th,table.cmp td{border:0.8px solid #9FB3C8;padding:4px 6px;vertical-align:top;text-align:left}
+  table.cmp thead th{background:#1F4E79 !important;color:#fff;font-size:10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.cmp tbody th{background:#E3EDF7 !important;color:#1F4E79;width:34mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 /* Papildu jautājumu sadaļas */
@@ -228,6 +231,23 @@ input:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 
 .filepick{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 #contMsg:not(:empty){margin-top:6px;background:var(--blue-soft);border-radius:6px;padding:5px 10px;color:var(--ink)}
 .sumcard{border-left:5px solid var(--blue);background:#F7FAFD}
+.atag{font-weight:400;font-size:11.5px;color:var(--blue);background:var(--blue-soft);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.qrow{padding:8px 0;border-bottom:1px dashed var(--line)}
+.qq{font-weight:600;font-size:15px;margin-bottom:5px}
+.qa{display:flex;flex-wrap:wrap;gap:6px}
+.mitiat{width:100%;margin-top:6px;font-size:14px;border-radius:6px;padding:6px 10px}
+.mitiat.ok{background:#DDEFDD;color:#1B4D22}
+.mitiat.no{background:var(--orange-soft);color:#7A3200}
+.cmpwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+table.cmp{border-collapse:collapse;width:100%;font-size:14px}
+table.cmp th,table.cmp td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;text-align:left}
+table.cmp thead th{background:var(--navy);color:#fff;font-family:var(--head);font-size:16px}
+table.cmp thead th:first-child{background:var(--navy)}
+table.cmp tbody th{background:var(--blue-soft);color:var(--navy);width:180px;font-weight:600}
+table.cmp td{min-width:190px}
+table.cmp textarea{min-height:44px;font-size:14px}
+table.cmp .seg button{padding:4px 8px;font-size:13px}
+.waitmsg{background:var(--orange-soft);border-radius:8px;padding:9px 16px;color:var(--ink);font-weight:600}
 .sumrow{display:grid;grid-template-columns:130px 1fr;gap:6px 10px;padding:5px 0;border-bottom:1px solid #E4EBF2;font-size:14.5px}
 .sumrow:last-child{border-bottom:none}
 .sumrow>span{font-weight:600;color:var(--navy)}
@@ -333,6 +353,7 @@ main{overflow-y:auto;height:100%;width:100%}
 
 <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
 <footer class="credit">Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</footer>
+<style id="pageStyle">@page{size:A4 portrait;margin:13mm 14mm}</style>
 <div id="print"></div>
 
 <script>
@@ -341,20 +362,25 @@ const PREFIX = 'jpskk-';
 const ALL_STEPS = {
   sakums:  {t:'Sākums'},
   tests:   {t:'Intereses un darba stils'},
-  es:      {t:'Es pats'},
+  es:      {t:'Manas īpašības un prasmes'},
   sapni:   {t:'Mērķi un sapņi'},
   macibas: {t:'Mācības un intereses'},
   merkis:  {t:'Mans mērķis'},
   modulis: {t:'Padziļinātie jautājumi'},
-  iestades:{t:'Mācību iestādes'},
-  enu:     {t:'Gatavojos Ēnu dienai'},
+  izpete:  {t:'Profesiju izpēte'},
+  kriteriji:{t:'Kas man svarīgs nākamajā skolā'},
+  salidz:  {t:'Iestāžu salīdzinājums', tk:'Iestāžu salīdzinājums (aizpilda konsultants)'},
+  saubas:  {t:'Jautājumi un šaubas'},
+  izvele:  {t:'Mana izvēle'},
   nosl:    {t:'Noslēgums', tk:'Secinājumi un ieteikumi'}
 };
 const PROG = {
   A:{n:'A — meklēju virzienu', d:'Skolēns vēl nezina, ko grib. Pirmā konsultācija.',
      steps:['sakums','tests','es','sapni','macibas','nosl']},
-  B:{n:'B — zinu mērķi, meklēju ceļu', d:'Skolēns zina mērķi un meklē mācību iestādi. Derīga arī otrajai konsultācijai.',
-     steps:['sakums','merkis','modulis','iestades','enu','nosl']}
+  B:{n:'B — zinu mērķi, meklēju ceļu', d:'Profesija zināma. Noskaidro izglītības ceļu pēc 9. klases un to, kas svarīgs nākamajā skolā.',
+     steps:['sakums','merkis','izpete','kriteriji','modulis','nosl']},
+  C:{n:'C — salīdzinām mācību iestādes', d:'Iestādes jau izvēlētas. Tās tiek sagatavotas iepriekš un konsultācijā salīdzinātas kopā.',
+     steps:['sakums','kriteriji','salidz','saubas','izvele','nosl']}
 };
 let STEPS = [];
 function setProg(p){
@@ -443,29 +469,99 @@ const VERT_TESTS = [
  ['rok','Darbs ar rokām un tehniku'],['cel','Iespēja ceļot'],['mac','Iespēja mācīties ko jaunu'],
  ['pats','Patstāvība un savs darba laiks']
 ];
+// Ceļi pēc 9. klases — pēc rīka „Individuālais karjeras plāns", 4. cilne
 const MODULI = [
- ['zinu','Zinu, ko gribu',[
-   'Kura profesija ir Tavs mērķis?','Kas Tevi šajā profesijā visvairāk piesaista?',
-   'Kur šo profesiju var apgūt? Nosauc divas mācību iestādes.','Kuri mācību priekšmeti un eksāmeni tur ir svarīgi?',
-   'Ko vari darīt jau šogad, lai tuvotos mērķim?','Kāds ir Tavs otrs variants, ja izvēlētais ceļš neizdodas?',
-   'Ko par šo izvēli domā Tava ģimene?']],
- ['nezinu','Nezinu, ko gribu',[
-   'Ko Tu noteikti negribi darīt?','Kādā vidē Tu gribētu strādāt: telpā, ārā, ceļā vai mājās?',
-   'Ar ko Tu gribētu strādāt: ar cilvēkiem, datiem, tehniku vai idejām?','Kad skolā pēdējoreiz bija tiešām interesanti? Kāpēc?',
-   'Kuras trīs jomas izpētīsi tuvākajā mēnesī?','Ko izmēģināsi praksē: pulciņu, ēnošanu vai brīvprātīgo darbu?']],
- ['eksakta','Eksaktā ievirze',[
-   'Kuri eksaktie priekšmeti Tev padodas vislabāk?','Kuras vidusskolas vai valsts ģimnāzijas Tu apsver?',
-   'Kurus padziļinātos kursus Tu apsver vidusskolā?','Vai Tu piedalies olimpiādēs, zinātniski pētnieciskajos darbos vai tehniskajos pulciņos?',
-   'Kuras studiju jomas Tevi interesē?','Ko darīsi, lai uzlabotu rezultātus matemātikā vai dabaszinātnēs?']],
- ['human','Humanitārā un sociālā ievirze',[
-   'Kuras valodas un humanitārie priekšmeti Tev padodas?','Kas Tev patīk vairāk: rakstīt, uzstāties vai veidot vizuālus darbus?',
-   'Vai Tev ir portfolio vai darbu krājums? Kas tajā ir?','Kuras radošās vai sociālās jomas Tevi interesē?',
-   'Vai izvēlētajā programmā ir iestājpārbaudījumi? Kādi?','Ko pievienosi portfolio tuvākajā pusgadā?']],
- ['prof','Profesionālā izglītība',[
-   'Vai Tu apsver tehnikumu vai profesionālo vidusskolu?','Kuras kvalifikācijas Tevi interesē?',
-   'Kurās mācību iestādēs tās var apgūt?','Kādi ir uzņemšanas nosacījumi un termiņi?',
-   'Vai gribi vēlāk turpināt mācības augstskolā?','Kas Tev ir svarīgāk: ātrāk iegūt profesiju vai ilgāk mācīties?']]
+ ['vsk','Vidusskola vai ģimnāzija','3 gadi. Plaša bāze, padziļinātie kursi, ceļš uz augstskolu.',[
+   'Kuru virzienu vai padziļinātos kursus Tu izvēlētos 10. klasē un kāpēc?',
+   'Vai Tev ir svarīgi, lai tā būtu valsts ģimnāzija? Kāpēc?',
+   'Vai Tev būtu vajadzīgi sagatavošanās kursi iestājpārbaudījumam?',
+   'Cik ilgs ceļš uz skolu Tev būtu pieņemams?',
+   'Kādi pulciņi vai papildu iespējas skolā Tev ir svarīgi?',
+   'Ko Tu gribētu uzzināt par skolas atmosfēru un skolēniem?']],
+ ['tehn','Tehnikums vai profesionālā vidusskola','3,5–4 gadi. Vidējā izglītība un kvalifikācija vienlaikus, prakse uzņēmumā.',[
+   'Vai Tu zini, ko konkrēti darītu praksē šajā programmā?',
+   'Cik Tev svarīga ir stipendija un kāds vēl atbalsts?',
+   'Vai Tev būtu vajadzīga dienesta viesnīca?',
+   'Kādos uzņēmumos Tu gribētu iziet praksi?',
+   'Vai pēc tam plāno strādāt vai turpināt augstskolā?',
+   'Cik tālu no mājām Tu būtu ar mieru mācīties?']],
+ ['maksl','Mākslu, mūzikas un dejas izglītība','4 gadi. Iestājpārbaudījumi un darbu mape; gatavošanās jāsāk gadu iepriekš.',[
+   'Vai Tava darbu mape ir gatava rādīt nepazīstamam cilvēkam?',
+   'Kādi iestājpārbaudījumi Tev būtu jākārto?',
+   'Vai apmeklē sagatavošanās kursus vai mākslas skolu?',
+   'Cik daudz laika dienā Tu esi ar mieru veltīt šai jomai?',
+   'Vai Tev būtu vajadzīga dienesta viesnīca vai ikdienas ceļš uz Rīgu?',
+   'Ko Tu darītu, ja pirmajā reizē neuzņemtu?']],
+ ['arod','Arodizglītība','2,5–3 gadi. Ātrāks ceļš pie amata; vidējo izglītību iegūst vēlāk.',[
+   'Vai Tu zini, kā un kad iegūsi vidējo izglītību?',
+   'Kādu amatu Tu gribētu iegūt?',
+   'Cik Tev svarīgi ir sākt pelnīt agrāk?',
+   'Vai Tev ir svarīga stipendija un prakse uzņēmumā?',
+   'Vai vēlāk gribētu turpināt mācības? Kur?',
+   'Cik tālu no mājām Tu būtu ar mieru mācīties?']],
+ ['sport','Sports un specializētie virzieni','3–4 gadi. Atlase, sasniegumi un liela slodze.',[
+   'Ko Tu darīsi, ja trauma vai rezultāti mainīs plānu?',
+   'Cik treniņu nedēļā Tev ir tagad?',
+   'Vai Tev vajadzīga dienesta viesnīca un īpašs mācību grafiks?',
+   'Kas Tev jāsasniedz, lai Tevi uzņemtu?',
+   'Kāds ir Tavs otrs virziens, ja sports nekļūs par profesiju?',
+   'Cik tālu no mājām Tu būtu ar mieru mācīties?']]
 ];
+// Tests, kas iesaka ceļu
+const MERK_TESTS = [
+ ['m1','Ko Tu plāno pēc 9. klases?',[
+   ['Vidusskolu vai ģimnāziju','vsk'],['Tehnikumu vai profesionālo vidusskolu','tehn'],['Vēl nav skaidrs','']]],
+ ['m2','Kas Tev ir svarīgāk?',[
+   ['Iegūt plašu pamatu un tad izvēlēties','vsk'],['Kopā ar vidējo izglītību iegūt profesiju','tehn'],['Ātri iegūt amatu un sākt strādāt','arod']]],
+ ['m3','Kuri mācību priekšmeti Tev padodas vislabāk?',[
+   ['Matemātika, dabaszinātnes, valodas','vsk'],['Praktiskie darbi un tehnoloģijas','tehn'],['Māksla, mūzika vai deja','maksl']]],
+ ['m4','Cik ilgi Tu esi ar mieru mācīties pēc 9. klases?',[
+   ['Trīs gadus un tad augstskolā','vsk'],['Trīs līdz četrus gadus ar praksi uzņēmumā','tehn'],['Pēc iespējas īsāk','arod']]],
+ ['m5','Vai Tev ir regulāras nodarbības, kas aizņem daudz laika?',[
+   ['Jā, sports','sport'],['Jā, māksla, mūzika vai deja','maksl'],['Nē','']]]
+];
+// Kas svarīgs nākamajā izglītības iestādē
+const SKOLAS_KRIT = [
+ ['statuss','Skolas statuss — ģimnāzija, tehnikums vai cita'],
+ ['ilgums','Mācību ilgums'],
+ ['stipendija','Stipendija'],
+ ['prakse','Prakse uzņēmumā'],
+ ['viesnica','Dienesta viesnīca'],
+ ['attalums','Attālums un ceļā pavadītais laiks'],
+ ['kursi','Sagatavošanās kursi'],
+ ['talak','Iespēja turpināt augstskolā'],
+ ['virzieni','Padziļinātie kursi un virzieni'],
+ ['vide','Pulciņi, sports un skolas atmosfēra']
+];
+// Stereotipu pārbaude
+const MITI = [
+ ['t1','Tehnikums ir tiem, kam neveicas mācībās','mits','Tehnikumā iegūst vidējo izglītību un profesionālo kvalifikāciju vienlaikus.'],
+ ['t2','Pēc tehnikuma augstskolā vairs netiek','mits','Profesionālā vidējā izglītība dod tiesības stāties augstskolā.'],
+ ['t3','Valsts ģimnāzijā jākārto iestājpārbaudījums','taisniba','Valsts ģimnāzijās ir vienotais iestājpārbaudījums.'],
+ ['t4','Reiz izvēlēts ceļš vairs nav maināms','mits','Starp ceļiem ir pārejas, lai gan tās prasa laiku.'],
+ ['t5','Profesionālajā izglītībā par mācībām jāmaksā','mits','Valsts profesionālās izglītības iestādēs mācības ir bez maksas, un daudzās programmās ir stipendija.'],
+ ['t6','Mākslas skolā pietiek ar labām atzīmēm','mits','Tur ir iestājpārbaudījumi un darbu mape, kas jāgatavo vismaz gadu iepriekš.']
+];
+// Šķēršļi — pēc rīka 5. cilnes
+const SKERSLI = ['Eksāmenu rezultāts var būt zemāks, nekā gaidu','Mani var neuzņemt izvēlētajā iestādē','Iestāde ir tālu no mājām','Ģimenei var nepietikt līdzekļu','Doma var mainīties','Vēl nezinu, ko gribu'];
+// C programmas salīdzinājuma lauki
+const IEST_LAUKI = [
+ ['n','Nosaukums'],['pr','Mācību programma un kvalifikācija'],['laiks','Mācību laiks'],
+ ['bonusi','Bonusi: stipendija, viesnīca, transports, prakse, kursi'],
+ ['persp','Nākotnes perspektīvas: darba vietas, augstskolas, ārzemes'],
+ ['pras','Uzņemšanas prasības un termiņš'],['cels','Attālums un nokļūšana'],
+ ['ad','Atvērto durvju diena'],['saite','Saite']
+];
+// Profesijas izpētes gatavības tests
+const IZPETE_TESTS = [
+ ['i1','Man ir bijusi saruna ar kādu, kas tur strādā','Parunāt ar kādu, kas šajā profesijā strādā'],
+ ['i2','Man ir bijusi iespēja redzēt šo darbu klātienē','Redzēt šo darbu klātienē'],
+ ['i3','Zinu, ko šajā darbā dara ikdienā','Noskaidrot, ko šajā darbā dara ikdienā'],
+ ['i4','Zinu, kādas prasmes tur ir vajadzīgas','Noskaidrot, kādas prasmes tur ir vajadzīgas'],
+ ['i5','Zinu, kur šo profesiju var apgūt','Noskaidrot, kur šo profesiju var apgūt'],
+ ['i6','Zinu, cik ilgi tam jāmācās','Noskaidrot, cik ilgi tam jāmācās']
+];
+const IZPETE_VEIDI = ['Ēnoju darbā','Runāju ar vecākiem','Runāju ar pazīstamu cilvēku','Lasīju internetā','Skatījos video','Biju atvērto durvju dienā','Izmēģināju praksē','Vēl nav pētīts'];
 const IPASIBAS = ['Atbildība','Radošums','Zinātkāre','Draudzīgums','Mierīgums','Enerģiskums','Pacietība','Precizitāte','Izpalīdzība','Mērķtiecība','Drosme','Humora izjūta','Kārtīgums','Neatlaidība','Godīgums','Empātija','Patstāvība','Uzņēmība','Sabiedriskums','Rūpība','Loģiska domāšana','Iejūtība','Organizētība','Optimisms','Praktiskums','Pašpārliecinātība','Elastīgums','Uzmanība pret detaļām'];
 const PRASMES = ['Zīmēšana','Rēķināšana','Rakstīšana','Uzstāšanās','Darbs ar datoru','Programmēšana','Sports','Muzicēšana','Dziedāšana','Dejošana','Svešvalodas','Gatavošana','Konstruēšana','Remontēšana','Rūpes par dzīvniekiem','Rūpes par mazākiem bērniem','Fotografēšana','Video veidošana','Dizains','Plānošana','Sadarbība komandā','Problēmu risināšana','Uzklausīšana','Pārliecināšana','Rokdarbi','Dārzkopība','Citu mācīšana'];
 const VERTIBAS = ['Ģimene','Draudzība','Veselība','Brīvība','Drošība','Godīgums','Taisnīgums','Atzinība','Materiālā labklājība','Radošums','Zināšanas','Izaugsme','Piedzīvojumi','Palīdzēt citiem','Daba','Ietekme','Stabilitāte','Neatkarība','Cieņa','Sasniegumi','Harmonija','Tradīcijas'];
@@ -508,15 +604,19 @@ function newS(){return{
   prieksmeti:{},padodas:{},prieksmCustom:[],prieksmPrec:'',prieksmVienmer:'',uztvere:[],pienakumi:'',varetu:'',
   profBerniba:[],profTagad:[],gimProf:[],gimIetekme:'',
   vertT:{},g1:'',g2:'',g3:'',g4:'',g5:'',g6:'',
-  merkKapec:'',merkNeskaidrs:'',enuJaut:'',
-  iest:[{n:'',pr:'',pras:'',term:'',ad:''},{n:'',pr:'',pras:'',term:'',ad:''},{n:'',pr:'',pras:'',term:'',ad:''}],
+  merkKapec:'',merkNeskaidrs:'',merkT:{},gatavs:false,
+  krit:{},miti:{},skersli:[],
+  iestV:{},iestQ:{},sb1:'',sb2:'',sb3:'',sb4:'',iz1:'',iz2:'',iz3:'',izB:'',izD:'',
+  izpT:{},izpVeidi:[],izpKo:'',izpUzz:'',izpKlat:'',enuJaut:'',iestJaut:[],
   enots:[{p:'',pat:'',nep:''},{p:'',pat:'',nep:''}],darbs:'',darbsPat:'',nauda:'',
   moto:'',
   vertibas:[],temperaments:'',testi:'',top3:['','',''],izvirzita:'',sapnis:''
 };}
 function newK(){return{
   konsultants:'',amats:'',skola:'',
-  prog:'A',sum:null,moduli:[],stipras:'',jomas:[],ieteikumi:'',uzdevums:'',norunats:'',linki:[],
+  prog:'A',sum:null,base:null,baseLabel:'',iestOn:false,
+  iest:[0,1,2,3].map(()=>({n:'',pr:'',laiks:'',bonusi:'',persp:'',pras:'',cels:'',ad:'',saite:''})),
+  moduli:[],stipras:'',jomas:[],ieteikumi:'',uzdevums:'',norunats:'',linki:[],
   soli:SOLI.map(t=>({t,on:false})),resursi:[],resCustom:[],nakama:''
 };}
 function newP(){return{notes:{},kopigais:'',secinajumi:''};}
@@ -570,8 +670,8 @@ function scaleW(path,lo,hi){WREG[path]={k:'scale',lo,hi};return `<div data-w="${
 function scaleIn(path){const v=getP(R,path);let h='<div class="scale">';for(let i=1;i<=10;i++)h+=`<button type="button" class="${v===i?'on':''}" data-act="scale" data-p="${path}" data-v="${i}">${i}</button>`;return h+`</div><div class="scale-ends"><span>${WREG[path].lo}</span><span>${WREG[path].hi}</span></div>`;}
 function lightW(key){const path='S.lomas.'+key;WREG[path]={k:'light'};return `<span data-w="${path}">${lightIn(path)}</span>`;}
 function lightIn(path){const v=getP(R,path)||'';return `<span class="light">${[['g','Zaļš: tas ir par mani'],['y','Dzeltens: dažreiz'],['r','Sarkans: nav par mani']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="seg" data-p="${path}" data-v="${c}" title="${l}" aria-label="${l}"></button>`).join('')}</span>`;}
-WREG['S.riasec']={k:'ri'};WREG['S.prasmesT']={k:'sk'};WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};WREG['S.vertT']={k:'vert'};
-function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();const e3=$('#vertRes');if(e3)e3.innerHTML=vertResHTML();}
+WREG['S.riasec']={k:'ri'};WREG['S.prasmesT']={k:'sk'};WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};WREG['S.vertT']={k:'vert'};WREG['S.merkT']={k:'merk'};WREG['S.izpT']={k:'izp'};WREG['S.krit']={k:'krit'};WREG['S.miti']={k:'miti'};WREG['S.iestV']={k:'salidz'};
+function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();const e3=$('#vertRes');if(e3)e3.innerHTML=vertResHTML();const e4=$('#merkRec');if(e4)e4.innerHTML=merkRecHTML();const e5=$('#izpRes');if(e5)e5.innerHTML=izpResHTML(ROLE==='skolens');const e6=$('#kritRes');if(e6)e6.innerHTML=kritResHTML();}
 function subjW(){WREG['S.prieksmeti']={k:'subj'};return `<div data-w="S.prieksmeti">${subjIn()}</div>`;}
 function subjIn(){
   const list=[...PRIEKSMETI,...R.S.prieksmCustom];
@@ -583,7 +683,7 @@ function subjIn(){
 }
 function rerender(path){
   const el=document.querySelector(`[data-w="${path}"]`);if(!el)return;const w=WREG[path];
-  const f={chips:chipsIn,tags:tagsIn,seg:segIn,scale:scaleIn,light:lightIn,subj:subjIn,ri:riIn,sk:skIn,stils:stilsIn,mac:macIn,vert:vertIn}[w.k];
+  const f={chips:chipsIn,tags:tagsIn,seg:segIn,scale:scaleIn,light:lightIn,subj:subjIn,ri:riIn,sk:skIn,stils:stilsIn,mac:macIn,vert:vertIn,merk:merkIn,izp:izpIn,krit:kritIn,miti:mitiIn,salidz:()=>salidzTable(ROLE==='skolens')}[w.k];
   el.innerHTML=f(path);
 }
 
@@ -645,39 +745,129 @@ function vertResHTML(){
     ${grp('Ļoti svarīgi',top,'g')}${grp('Vidēji',mid,'')}${grp('Nav svarīgi',low,'r')}
     <p class="hint">Salīdzini to ar profesijām, par kurām domā. Vai tās to spēj dot?</p>`;
 }
+function merkIn(){
+  return '<div class="items" style="grid-template-columns:1fr">'+MERK_TESTS.map(([k,q,opts])=>{
+    const v=R.S.merkT[k]||'';
+    return `<div class="qrow"><div class="qq">${esc(q)}</div><div class="qa">${opts.map(([l],i)=>
+      `<button type="button" class="chip${v===String(i)?' on':''}" data-act="mt" data-k="${k}" data-v="${i}">${esc(l)}</button>`).join('')}</div></div>`;
+  }).join('')+'</div>';
+}
+function merkScore(){
+  const sc={};let done=0;
+  MERK_TESTS.forEach(([k,,opts])=>{const v=R.S.merkT[k];if(v===undefined||v==='')return;done++;
+    const m=opts[+v]&&opts[+v][1];if(m)sc[m]=(sc[m]||0)+1;});
+  const arr=Object.keys(sc).map(id=>({id,n:(MODULI.find(x=>x[0]===id)||['','?'])[1],d:(MODULI.find(x=>x[0]===id)||['','',''])[2],c:sc[id]}));
+  arr.sort((a,b)=>b.c-a.c);
+  return {arr,done,total:MERK_TESTS.length};
+}
+function merkRecHTML(){
+  const r=merkScore();
+  if(!r.done)return `<div class="hints"><b>Ieteicamā padziļinātā sadaļa</b><div class="muted">Parādīsies, tiklīdz skolēns atbildēs uz pirmajiem jautājumiem.</div></div>`;
+  const top=r.arr.slice(0,2);
+  return `<div class="hints"><b>Ieteicamā padziļinātā sadaļa</b> <span class="muted">(atbildēts ${r.done} no ${r.total})</span>
+    <ul style="margin:6px 0 0;padding-left:18px">
+      ${top.map(x=>`<li><b>${esc(x.n)}</b> — ${esc(x.d)} <span class="muted">(${x.c} atbildes)</span></li>`).join('')}
+    </ul>
+    ${R.S.gatavs?'<div style="margin-top:6px;color:var(--orange);font-weight:600">Skolēns ir pabeidzis šo soli un gaida.</div>':''}</div>`;
+}
+function izpIn(){
+  return '<div class="items" style="grid-template-columns:1fr 1fr">'+IZPETE_TESTS.map(([k,q])=>{const v=R.S.izpT[k]||'';
+    return `<div class="itemrow"><span class="nm">${esc(q)}</span><span class="seg">${[['p','Jā'],['x','Daļēji'],['n','Nē']].map(([c,l])=>
+      `<button type="button" class="${c}${v===c?' on':''}" data-act="iz" data-k="${k}" data-v="${c}">${l}</button>`).join('')}</span></div>`;}).join('')+'</div>';
+}
+function izpScore(){
+  let y=0,part=0;const gaps=[];
+  IZPETE_TESTS.forEach(([k,,g])=>{const v=R.S.izpT[k];if(v==='p')y++;else if(v==='x')part++;else if(v==='n')gaps.push(g);});
+  return {y,part,gaps,total:IZPETE_TESTS.length,answered:IZPETE_TESTS.filter(([k])=>R.S.izpT[k]).length};
+}
+function izpResHTML(forStudent){
+  const s=izpScore();
+  if(!s.answered)return `<h3>Cik daudz par profesiju jau zini</h3><p class="muted">Rezultāts parādīsies, tiklīdz atzīmēsi pirmās atbildes.</p>`;
+  const pct=Math.round((s.y+s.part*0.5)/s.total*100);
+  return `<h3>${forStudent?'Cik daudz par profesiju jau zini':'Izpētes gatavība'}</h3>
+    <div style="font-family:var(--head);font-size:26px;color:var(--navy);font-weight:700">${pct}%</div>
+    <span class="bar" style="display:block;max-width:100%"><span style="width:${pct}%"></span></span>
+    <div style="margin-top:10px"><b>Zinu:</b> ${s.y} no ${s.total}${s.part?`, daļēji ${s.part}`:''}</div>
+    ${s.gaps.length?`<div style="margin-top:8px"><b>Vēl jānoskaidro</b><ul style="margin:4px 0 0;padding-left:18px">${s.gaps.map(g=>`<li>${esc(g)}</li>`).join('')}</ul></div>`:''}
+    <p class="hint">${forStudent?'Tas nav vērtējums. Tas parāda, par ko vēl vērts painteresēties.':'Šie ir konkrēti uzdevumi, ko var iekļaut ieteikumos.'}</p>`;
+}
+function kritIn(){
+  return '<div class="items" style="grid-template-columns:1fr 1fr">'+SKOLAS_KRIT.map(([k,q])=>{const v=R.S.krit[k]||'';
+    return `<div class="itemrow"><span class="nm">${esc(q)}</span><span class="seg">${[['p','Ļoti svarīgi'],['x','Vidēji'],['n','Nav svarīgi']].map(([c,l])=>
+      `<button type="button" class="${c}${v===c?' on':''}" data-act="kr" data-k="${k}" data-v="${c}">${l}</button>`).join('')}</span></div>`;}).join('')+'</div>';
+}
+function kritTop(){return SKOLAS_KRIT.filter(([k])=>R.S.krit[k]==='p').map(([,q])=>q);}
+function kritMid(){return SKOLAS_KRIT.filter(([k])=>R.S.krit[k]==='x').map(([,q])=>q);}
+function kritLow(){return SKOLAS_KRIT.filter(([k])=>R.S.krit[k]==='n').map(([,q])=>q);}
+function kritResHTML(){
+  const a=kritTop(),b=kritMid(),c=kritLow();
+  if(!a.length&&!b.length&&!c.length)return '<h3>Mani kritēriji</h3><p class="muted">Rezultāts parādīsies, tiklīdz atzīmēsi pirmās atbildes.</p>';
+  const grp=(tt,arr,cl)=>arr.length?`<h4 style="font-family:var(--head);color:var(--navy);margin:8px 0 4px">${tt}</h4><div>${arr.map(x=>`<span class="v ${cl}">${esc(x)}</span>`).join('')}</div>`:'';
+  return `<h3>Mani kritēriji</h3>${grp('Ļoti svarīgi',a,'g')}${grp('Vidēji',b,'')}${grp('Nav svarīgi',c,'r')}
+    <p class="hint">Pēc šiem kritērijiem salīdzināsim konkrētas iestādes.</p>`;
+}
+function mitiIn(){
+  return MITI.map(([k,q,ats,skaidr])=>{const v=R.S.miti[k]||'';
+    return `<div class="qrow"><div class="qq">${esc(q)}</div><div class="qa">
+      ${[['mits','Mīts'],['taisniba','Taisnība'],['nezinu','Nezinu']].map(([c,l])=>
+        `<button type="button" class="chip${v===c?' on':''}" data-act="my" data-k="${k}" data-v="${c}">${l}</button>`).join('')}
+      ${v?`<div class="mitiat ${v===ats?'ok':'no'}">${v===ats?'Pareizi. ':(ats==='mits'?'Tas ir mīts. ':'Tā ir taisnība. ')}${esc(skaidr)}</div>`:''}
+    </div></div>`;}).join('');
+}
+function mitiScore(){
+  let ok=0,ans=0;MITI.forEach(([k,,ats])=>{const v=R.S.miti[k];if(!v)return;ans++;if(v===ats)ok++;});
+  return {ok,ans,total:MITI.length};
+}
+function salidzCols(){return (R.K.iest||[]).map((x,i)=>({i,x})).filter(o=>has(o.x));}
+function salidzTable(forStudent){
+  const cols=salidzCols();
+  if(!cols.length)return '';
+  return `<div class="cmpwrap"><table class="cmp"><thead><tr><th></th>${cols.map(o=>`<th>${esc(o.x.n||('Iestāde '+(o.i+1)))}</th>`).join('')}</tr></thead><tbody>
+    ${IEST_LAUKI.slice(1).map(([f,l])=>`<tr><th>${esc(l)}</th>${cols.map(o=>`<td>${f==='saite'&&o.x[f]?`<a href="${esc(o.x[f])}" target="_blank" rel="noopener">${esc(o.x[f])}</a>`:nl(o.x[f]||'')||'<span class="empty">—</span>'}</td>`).join('')}</tr>`).join('')}
+    <tr><th>Mans vērtējums</th>${cols.map(o=>{const v=R.S.iestV[o.i]||'';
+      return `<td>${forStudent?`<span class="seg">${[['p','Patīk'],['x','Vēl nezinu'],['n','Nepatīk']].map(([c,l])=>
+        `<button type="button" class="${c}${v===c?' on':''}" data-act="iv" data-k="${o.i}" data-v="${c}">${l}</button>`).join('')}</span>`
+        :(v?`<span class="v ${v==='p'?'g':v==='n'?'r':''}">${v==='p'?'Patīk':v==='x'?'Vēl nezinu':'Nepatīk'}</span>`:'<span class="empty">—</span>')}</td>`;}).join('')}</tr>
+    <tr><th>Mans jautājums</th>${cols.map(o=>`<td>${forStudent?`<textarea data-f="S.iestQ.${o.i}" rows="2" placeholder="Ko gribu noskaidrot">${esc(R.S.iestQ[o.i]||'')}</textarea>`:(nl(R.S.iestQ[o.i]||'')||'<span class="empty">—</span>')}</td>`).join('')}</tr>
+  </tbody></table></div>`;
+}
 function iestIn(){
-  return R.S.iest.map((x,i)=>`<div class="card" style="margin-bottom:12px"><h3>${i+1}. iestāde</h3>
+  return R.K.iest.map((x,i)=>`<div class="card" style="margin-bottom:12px"><h3>${i+1}. iestāde</h3>
     <div class="grid2" style="gap:10px">
-      <div>${fld('Nosaukums','S.iest.'+i+'.n')}</div>
-      <div>${fld('Programma vai kvalifikācija','S.iest.'+i+'.pr')}</div>
-      <div>${fld('Prasības un eksāmeni','S.iest.'+i+'.pras')}</div>
-      <div>${fld('Uzņemšanas termiņš','S.iest.'+i+'.term')}</div>
-    </div>${fld('Atvērto durvju diena','S.iest.'+i+'.ad',{opt:1})}</div>`).join('');
+      ${IEST_LAUKI.map(([f,l])=>`<div${(f==='bonusi'||f==='persp')?' class="span2"':''}>${fld(l,'K.iest.'+i+'.'+f,(f==='bonusi'||f==='persp')?{area:1,rows:2}:{})}</div>`).join('')}
+    </div></div>`).join('');
 }
 function iestRows(){
-  return R.S.iest.filter(x=>has(x)).map((x,i)=>`<div><b>${esc(x.n||('Iestāde '+(i+1)))}</b>${x.pr?' — '+esc(x.pr):''}${x.pras?'<br>Prasības: '+esc(x.pras):''}${x.term?'<br>Termiņš: '+esc(x.term):''}${x.ad?'<br>Atvērto durvju diena: '+esc(x.ad):''}</div>`).join('');
+  return salidzCols().map(o=>{const x=o.x;
+    return `<div style="margin-bottom:6px"><b>${esc(x.n||('Iestāde '+(o.i+1)))}</b>${x.pr?' — '+esc(x.pr):''}`+
+      [['laiks','Mācību laiks'],['bonusi','Bonusi'],['persp','Perspektīvas'],['pras','Uzņemšana'],['cels','Ceļš'],['ad','Atvērto durvju diena']]
+        .map(([f,l])=>x[f]?`<br>${l}: ${esc(x[f])}`:'').join('')+
+      (x.saite?`<br>${esc(x.saite)}`:'')+'</div>';}).join('');
 }
 function makeSum(prevNr,prevDate,prevProg){
   const S=R.S,K=R.K,r=riScore();
   const soli=(K.soli||[]).filter(x=>x.on).map(x=>x.t);
-  const top=S.top3.filter(has);
   return {on:true,nr:prevNr||'',datums:prevDate||'',prog:prevProg||'',
     norunats:K.norunats||'',uzdevums:K.uzdevums||'',soli:soli,
-    top3:top,izvirzita:(S.top3[+S.izvirzita]||''),
+    top3:S.top3.filter(has),izvirzita:(S.top3[+S.izvirzita]||''),
     ri:r.done?r.arr.slice(0,3).map(x=>x.n+' '+x.pct+'%'):[],
+    krit:kritTop(),
+    iest:(K.iestOn&&K.iest)?K.iest.filter(x=>has(x)).map(x=>[x.n,x.pr].filter(Boolean).join(' — ')):[],
     vertibas:(S.vertibas||[]).slice(),g1:S.g1||'',g3:S.g3||''};
 }
-function sumEmpty(s){return !s||!(has(s.norunats)||has(s.uzdevums)||s.soli.length||s.top3.length||s.ri.length||s.vertibas.length||has(s.g1)||has(s.g3));}
+function sumEmpty(s){return !s||!(has(s.norunats)||has(s.uzdevums)||(s.soli||[]).length||(s.top3||[]).length||(s.ri||[]).length||(s.iest||[]).length||(s.krit||[]).length||(s.vertibas||[]).length||has(s.g1)||has(s.g3));}
 function sumHTML(s,forStudent){
   if(sumEmpty(s))return '';
   const row=(l,v)=>v?`<div class="sumrow"><span>${l}</span><div>${v}</div></div>`:'';
-  const chips=a=>a.map(x=>`<span class="v">${esc(x)}</span>`).join('');
+  const chips=a=>(a||[]).map(x=>`<span class="v">${esc(x)}</span>`).join('');
   const when=[s.datums?fmtDate(s.datums):'',s.nr?s.nr+'. konsultācija':''].filter(Boolean).join(', ');
   return `<div class="card sumcard"><h3>${forStudent?'Iepriekšējā reizē':'Kopsavilkums, ko redz skolēns'}</h3>
     ${when?`<p class="hint" style="margin-top:-4px">${esc(when)}</p>`:''}
     ${row('Ko norunājām',nl(s.norunats))}
     ${row('Uzdevums',nl(s.uzdevums))}
-    ${row('Nākamie soļi',s.soli.length?'<ul style="margin:0;padding-left:18px">'+s.soli.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'')}
+    ${row('Nākamie soļi',(s.soli||[]).length?'<ul style="margin:0;padding-left:18px">'+s.soli.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'')}
+    ${row('Ieteiktās iestādes',chips(s.iest))}
+    ${row('Man svarīgi skolā',chips(s.krit))}
     ${row('Interešu tests',chips(s.ri))}
     ${row('Profesijas',chips(s.top3)+(s.izvirzita?` <b>★ ${esc(s.izvirzita)}</b>`:''))}
     ${row('Vērtības',chips(s.vertibas))}
@@ -809,49 +999,87 @@ const SVIEW = {
         <label class="f">Kuru profesiju Tu izvirzi kā galveno?</label>${segW('S.izvirzita',[['0','1.'],['1','2.'],['2','3.']])}</div>
       <div class="card">${fld('Kas Tevi šajā profesijā visvairāk piesaista?','S.merkKapec',{area:1,rows:3})}
         ${fld('Kas Tev par šo profesiju vēl nav skaidrs?','S.merkNeskaidrs',{area:1,rows:3})}</div>
-      <div class="card"><h3>Kas Tev dzīvē ir vissvarīgākais? Izvēlies trīs vērtības.</h3>${chipsW('S.vertibas',VERTIBAS,3)}
-        <div class="hint" style="margin-top:8px">Profesijas izpētei:</div>${linkList(['nva','algas','prakse','pp'])}</div>
-      <div class="card">${r.done?`<h3>Tava interešu testa atbilde</h3><div>${r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join('')}</div>
-        <p class="hint">Vai izvēlētā profesija sakrīt ar šo?</p>`:'<h3>Interešu tests nav pildīts</h3><p class="hint">To var aizpildīt anketā pirms konsultācijas.</p>'}
-        ${extras('Papildu jautājumi',
-          fld('Vai Tev jau ir bijis algots darbs, piemēram, vasarā?','S.darbs',{area:1,rows:2,opt:1})+
-          fld('Kas patika, kas nepatika?','S.darbsPat',{area:1,rows:2})+
-          fld('Ko Tev nozīmē pašu spēkiem nopelnīta nauda?','S.nauda',{area:1,rows:2,opt:1}))}</div>
+      <div class="card span2"><h3>Kas Tev šobrīd visvairāk vajadzīgs?</h3>
+        <p class="hint" style="margin-top:-6px">Pieci ātri jautājumi. Tie palīdz izvēlēties, par ko runāsim tālāk.</p>
+        <div data-w="S.merkT">${merkIn()}</div></div>
+      <div class="card span2"><h3>Kas Tev dzīvē ir vissvarīgākais? Izvēlies trīs vērtības.</h3>${chipsW('S.vertibas',VERTIBAS,3)}
+        ${r.done?`<div class="hint" style="margin-top:10px">Tava interešu testa atbilde: ${r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join('')} Vai izvēlētā profesija ar to sakrīt?</div>`:''}</div>
     </div>`;
   },
   modulis:()=>{
     const sel=MODULI.filter(m=>R.K.moduli.includes(m[0]));
-    if(!sel.length)return `<p class="lead">Padziļinātā sadaļa vēl nav izvēlēta. Uzgaidi mirkli vai pārej uz nākamo soli.</p>`;
+    const ask=`<div class="card accent"><h3>Vai kāda mācību iestāde Tevi jau interesē?</h3>
+      <p class="hint" style="margin-top:-6px">Nosauc līdz trim. Karjeras konsultante tās izpētīs un atsūtīs, ko noskaidroja.</p>
+      ${tagsW('S.iestJaut','Iestādes nosaukums')}</div>`;
+    if(!sel.length)return `<p class="lead">Padziļinātā sadaļa vēl nav izvēlēta. Uzgaidi mirkli vai atbildi uz jautājumu zemāk.</p>${ask}`;
     return `<p class="lead">Šie jautājumi ir par Tavu tālāko ceļu. Atbildi īsi, pārējo pārrunāsim.</p>
-      ${sel.map(([id,tt,qs])=>`<div class="card" style="margin-bottom:16px"><h3>${esc(tt)}</h3>
-        <div class="grid2" style="gap:12px">${qs.map((q,i)=>`<div>${fld(q,'S.mod.'+id+'_'+i,{area:1,rows:2})}</div>`).join('')}</div>
-        <div class="hint" style="margin-top:8px">Noderīgi: <a href="https://www.niid.lv/" target="_blank" rel="noopener">NIID.lv izglītības iespēju datubāze</a>, <a href="https://www.profesijupasaule.lv/" target="_blank" rel="noopener">Profesiju pasaule</a></div></div>`).join('')}`;
+      ${sel.map(([id,tt,,qs])=>`<div class="card" style="margin-bottom:16px"><h3>${esc(tt)}</h3>
+        <div class="grid2" style="gap:12px">${qs.map((q,i)=>`<div>${fld(q,'S.mod.'+id+'_'+i,{area:1,rows:2})}</div>`).join('')}</div></div>`).join('')}
+      ${ask}`;
   },
-  iestades:()=>`
-    <p class="lead">Pieraksti iestādes, kuras Tu apsver. Tās pašas nonāks Tavā uzdevuma lapā.</p>
+  izpete:()=>`
+    <p class="lead">Parunāsim par to, cik daudz Tu par šo darbu jau zini. Pētīt var dažādi, ne tikai ēnojot.</p>
     <div class="kgrid">
-      <div>${iestIn()}</div>
-      <div class="card accent"><h3>Kur meklēt</h3>
-        ${linkList(['niidb','pp','prakse','nva'])}
-        <p class="hint">Katrai iestādei noskaidro vismaz uzņemšanas termiņu un to, kuri eksāmeni vai vērtējumi tiek ņemti vērā.</p></div>
+      <div>
+        <div class="card"><h3>Ko Tu par šo profesiju jau zini?</h3><div data-w="S.izpT">${izpIn()}</div></div>
+        <div class="card" style="margin-top:16px"><h3>Kā Tu to uzzināji?</h3>${chipsW('S.izpVeidi',IZPETE_VEIDI,4)}
+          ${fld('Par kuru profesiju Tu zini visvairāk?','S.izpKo',{rows:1})}
+          ${fld('Ko Tu uzzināji, kas Tevi pārsteidza?','S.izpUzz',{area:1,rows:2})}
+          ${fld('Ko Tu gribētu redzēt vai izmēģināt klātienē?','S.izpKlat',{area:1,rows:2})}</div>
+      </div>
+      <div>
+        <div class="card accent" id="izpRes">${izpResHTML(true)}</div>
+        <div class="card" style="margin-top:16px"><h3>Mīts vai realitāte?</h3>
+          <p class="hint" style="margin-top:-6px">Atzīmē, ko domā. Atbilde parādās uzreiz.</p>
+          <div data-w="S.miti">${mitiIn()}</div></div>
+        <div style="margin-top:16px">${extras('Ēnu diena',
+          fld('Kādus jautājumus uzdotu ēnu devējam?','S.enuJaut',{area:1,rows:3})+
+          '<h4 style="font-family:var(--head);color:var(--navy);margin:12px 0 4px">Radošais uzdevums „No bērnības sapņa līdz šodienas izvēlei”</h4>'+
+          '<ul style="margin:0 0 8px;padding-left:18px;font-size:15px"><li>Par ko bērnībā gribēji kļūt?</li>'+
+          '<li>Kura rotaļlieta, spēle vai multfilmas varonis ir saistīts ar Tavām tagadējām interesēm?</li>'+
+          '<li>Kāpēc Ēnu dienā gribi ēnot tieši šo profesiju?</li></ul>'+
+          fld('Manas domas','S.sapnis',{area:1,rows:3,hint:'Tās ir tikai piezīmes. Pašu tekstu rakstīsi latviešu valodas stundā ar roku.'}))}</div>
+      </div>
     </div>`,
-  enu:()=>`
-    <p class="lead">Šīs atbildes noderēs, gatavojoties Ēnu dienai un veidojot prezentācijas vizītkarti.</p>
+  kriteriji:()=>{
+    const was=Object.keys(R.S.krit).length>0;
+    return `<p class="lead">${R.K.prog==='C'?(was?'Šie ir Tavi kritēriji no iepriekšējās reizes. Ja kaut kas mainījies, pārliec atbildi.':'Vispirms noskaidrosim, kas Tev izvēlē ir svarīgi.'):'Kas Tev būtu svarīgi nākamajā izglītības iestādē? Pēc tā salīdzināsim konkrētas skolas.'}</p>
+    <div class="kgrid">
+      <div class="card"><h3>Cik svarīgs Tev ir katrs no šiem?</h3><div data-w="S.krit">${kritIn()}</div></div>
+      <div>
+        <div class="card accent" id="kritRes">${kritResHTML()}</div>
+        ${R.K.prog==='B'?`<div class="card" style="margin-top:16px"><h3>Kas Tevi visvairāk uztrauc?</h3>
+          <p class="hint" style="margin-top:-6px">Izvēlies līdz trim. Par tiem parunāsim.</p>${chipsW('S.skersli',SKERSLI,3,false)}</div>`:''}
+      </div>
+    </div>`;
+  },
+  salidz:()=>{
+    if(!R.K.iestOn||!salidzCols().length)return `<p class="lead">Šo sadaļu sagatavo karjeras konsultante.</p>
+      <div class="card"><h3>Iestāžu salīdzinājums</h3><p>Karjeras konsultante ir izpētījusi iestādes un parādīs tās pēc brīža.</p>
+      ${R.S.iestJaut&&R.S.iestJaut.length?`<p class="hint">Tu nosauci: ${esc(R.S.iestJaut.join(', '))}</p>`:''}</div>`;
+    return `<p class="lead">Šīs iestādes sagatavoja karjeras konsultante. Apskati un pie katras atzīmē savu vērtējumu.</p>
+      ${kritTop().length?`<div class="hints">Tev svarīgi: ${kritTop().map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}
+      <div data-w="S.iestV">${salidzTable(true)}</div>`;
+  },
+  saubas:()=>`
+    <p class="lead">Pirms izvēles pierakstīsim to, kas vēl nav skaidrs.</p>
     <div class="grid2">
-      <div class="card"><h3>Vai Tev jau ir ēnošanas pieredze?</h3>
-        ${[0,1].map(i=>`<div class="grid3" style="gap:8px;margin-bottom:8px"><div>${fld(i?'':'Profesija','S.enots.'+i+'.p')}</div><div>${fld(i?'':'Kas patika','S.enots.'+i+'.pat')}</div><div>${fld(i?'':'Kas nepatika','S.enots.'+i+'.nep')}</div></div>`).join('')}
-        ${fld('Kādus jautājumus uzdosi ēnu devējam?','S.enuJaut',{area:1,rows:3})}
-        <div class="hint">Noderīgi:</div>${linkList(['enu'])}</div>
-      <div class="card accent"><h3>Radošais uzdevums „No bērnības sapņa līdz šodienas izvēlei”</h3>
-        <ul style="margin:0 0 8px;padding-left:18px;font-size:15px">
-          <li>Par ko bērnībā gribēji kļūt?</li>
-          <li>Kura rotaļlieta, spēle vai multfilmas varonis ir saistīts ar Tavām tagadējām interesēm? Izvēlies tikai vienu.</li>
-          <li>Kāpēc Ēnu dienā gribi ēnot tieši šo profesiju?</li></ul>
-        ${fld('Manas domas','S.sapnis',{area:1,rows:3,hint:'Tās ir tikai piezīmes. Pašu tekstu rakstīsi latviešu valodas stundā ar roku.'})}
-        ${extras('Testu rezultāti',
-          '<label class="f">Mans temperamenta tips</label>'+segW('S.temperaments',TEMPER)+
-          fld('Ko parādīja testu rezultāti?','S.testi',{area:1,rows:2,ph:'Piemēram, trīs piemērotākās jomas'}))}</div>
+      <div class="card">${fld('Kas Tev vēl nav skaidrs?','S.sb1',{area:1,rows:3})}</div>
+      <div class="card">${fld('Kas Tevi šajā izvēlē visvairāk uztrauc?','S.sb2',{area:1,rows:3})}</div>
+      <div class="card">${fld('Ko par šo izvēli saka ģimene?','S.sb3',{area:1,rows:3,opt:1})}</div>
+      <div class="card accent">${fld('Ko pajautāsi atvērto durvju dienā?','S.sb4',{area:1,rows:3})}</div>
     </div>`,
+  izvele:()=>{
+    const nosauk=salidzCols().map(o=>o.x.n).filter(Boolean);
+    const hint=nosauk.length?`<p class="hint">Salīdzinātās iestādes: ${esc(nosauk.join(', '))}</p>`:'';
+    return `<p class="lead">Sarindo iestādes tādā secībā, kādā tās pieteiksi. Tas nav galīgs lēmums, bet skaidrs plāns.</p>
+    <div class="grid2">
+      <div class="card accent"><h3>Mana secība</h3>${hint}
+        ${[1,2,3].map(i=>`<div class="row" style="margin-bottom:8px;flex-wrap:nowrap"><span style="font-weight:700;width:18px">${i}.</span><input type="text" data-f="S.iz${i}" value="${esc(R.S['iz'+i]||'')}" aria-label="${i}. vieta"></div>`).join('')}
+        ${fld('Rezerves variants, ja neizdodas neviens','S.izB',{area:1,rows:2})}</div>
+      <div class="card">${fld('Kas man jāizdara un līdz kad?','S.izD',{area:1,rows:6,ph:'Piemēram: līdz 15. oktobrim aizpildīt pieteikumu atvērto durvju dienai'})}</div>
+    </div>`;
+  },
   nosl:()=>`
     <div class="grid2">
       <div class="card accent"><label class="f">Cik skaidri Tu tagad zini, ko vēlies darīt nākotnē?</label>${scaleW('S.skalaBeig','Nemaz nezinu','Zinu pilnīgi droši')}
@@ -883,7 +1111,8 @@ function V(x){
 function rows(id){
   const S=R.S;
   switch(id){
-    case 'sakums':return[['Vārds, uzvārds',V(S.name)],['Klase',V(S.klase)],['Datums un laiks',V([fmtDate(S.datums),S.laiks?'plkst. '+S.laiks:''].filter(Boolean).join(' '))],['Konsultācija Nr.',V(S.nr)],['Galvenais jautājums',V(S.gaidas)],['Vērtējums sākumā',S.skalaSak?S.skalaSak+' / 10':''],
+    case 'sakums':return[['Vārds, uzvārds',V(S.name)],['Klase',V(S.klase)],['Datums un laiks',V([fmtDate(S.datums),S.laiks?'plkst. '+S.laiks:''].filter(Boolean).join(' '))],['Konsultācija Nr.',V(S.nr)],
+      ['Kāds ir Tavs galvenais jautājums?',V(S.gaidas)],['Cik skaidri zini, ko darīt nākotnē?',S.skalaSak?S.skalaSak+' / 10':''],
       ...IEPAZ.map(([k,q])=>[q,V(S[k])])];
     case 'tests':{const r=riScore(),sk=skLists(),m=macResult();
       return[['Testa apjoms',S.testLen==='iss'?'Īsais':'Pilnais'],['Atbildēts',r.done+' no '+r.total],
@@ -892,40 +1121,87 @@ function rows(id){
         ['Profesiju piemēri',r.done?esc(r.arr.slice(0,3).map(x=>TIPI[x.c].p.slice(0,4).join(', ')).join('; ')):''],
         ['Labi padodas',V(sk.l)],['Vēl jāmācās',V(sk.j)],
         ['Darba stils',V(stilsProfile())],['Mācās vieglāk',m?esc(m.top.join(' un ')):'']];}
-    case 'es':return[['Īpašības',V(S.ipasibas)],['Prasmes',V(S.prasmes)],['Lepnums',V(S.lepnums)],['Motivācija',V(S.motivacija)],['Moto',V(S.moto)]];
+    case 'es':return[['Kā Tu sevi raksturotu? (piecas īpašības)',V(S.ipasibas)],['Ko Tu proti vislabāk? (piecas prasmes)',V(S.prasmes)],
+      ['Ar ko savā dzīvē Tu lepojies visvairāk?',V(S.lepnums)],['Kas Tevi pamudināja to paveikt?',V(S.motivacija)],
+      ['Kāds ir Tavs mīļākais teiciens vai dzīves moto?',V(S.moto)]];
     case 'sapni':return[['Darbā ļoti svarīgi',vertTop().map(x=>`<span class="v g">${esc(x)}</span>`).join('')],
       ['Darbā vidēji svarīgi',vertMid().map(x=>`<span class="v">${esc(x)}</span>`).join('')],
       ['Darbā nav svarīgi',vertLow().map(x=>`<span class="v r">${esc(x)}</span>`).join('')],
       ['Nav atzīmēts',vertNone().length?`<span class="empty">${esc(vertNone().join(', '))}</span>`:''],
-      ['Vērtības',V(S.vertibas)],
-      ['Līdz mācību gada beigām',V(S.g1)],['Pēc 9. klases',V(S.g2)],['Sapņu darbs',V(S.g3)],['Kas jāiemācās',V(S.g4)],
-      ['Profesijas prātā',V(S.profTagad)],['Kas varētu apturēt',V(S.g5)],['Kurš var palīdzēt',V(S.g6)],
-      ['Bērnībā gribēja kļūt',V(S.profBerniba)],['Profesijas ģimenē',V(S.gimProf)],['Ģimenes ietekme',V(S.gimIetekme)]];
-    case 'macibas':{const all=[...PRIEKSMETI,...S.prieksmCustom];const f=c=>all.filter(s=>S.prieksmeti[s]===c).map(s=>`<span class="v ${c==='p'?'g':c==='n'?'r':''}">${esc(s)}${S.padodas[s]?' ★':''}</span>`).join('');
-      const pad=all.filter(s=>S.padodas[s]&&!S.prieksmeti[s]).map(s=>`<span class="v">${esc(s)} ★</span>`).join('');
+      ['Kas Tev dzīvē ir vissvarīgākais? (trīs vērtības)',V(S.vertibas)],
+      ['Ko Tu gribētu paveikt līdz šī mācību gada beigām?',V(S.g1)],
+      ['Kur Tu gribētu mācīties pēc 9. klases?',V(S.g2)],
+      ['Ja viss izdotos, kāds darbs Tev būtu pēc skolas beigšanas?',V(S.g3)],
+      ['Kas Tev jāiemācās vai jāizdara, lai tas piepildītos?',V(S.g4)],
+      ['Profesijas, kuras Tev jau ir nākušas prātā',V(S.profTagad)],
+      ['Kas Tevi varētu apturēt un kā to var novērst?',V(S.g5)],
+      ['Kurš Tev var palīdzēt ceļā uz mērķi?',V(S.g6)],
+      ['Par ko Tu gribēji kļūt bērnībā?',V(S.profBerniba)],
+      ['Profesijas Tavā ģimenē',V(S.gimProf)],
+      ['Vai tās ir ietekmējušas Tavas izvēles un intereses?',V(S.gimIetekme)]];
+    case 'macibas':{const all=[...PRIEKSMETI,...S.prieksmCustom];const f=c=>all.filter(x=>S.prieksmeti[x]===c).map(x=>`<span class="v ${c==='p'?'g':c==='n'?'r':''}">${esc(x)}${S.padodas[x]?' ★':''}</span>`).join('');
+      const pad=all.filter(x=>S.padodas[x]&&!S.prieksmeti[x]).map(x=>`<span class="v">${esc(x)} ★</span>`).join('');
       const g=c=>LOMAS.filter(([k])=>S.lomas[k]===c).map(([,l])=>`<span class="v ${c}">${l}</span>`).join('');
-      return[['Patīk',f('p')],['Nepatīk',f('n')],['Neitrāli',f('x')+pad],
-        ['Tas esmu es',g('g')],['Dažreiz',g('y')],['Nav par mani',g('r')],
-        ['Hobijs',V(S.hobijs)],['Apmeklē',V(S.pulcini)],['Varētu runāt stundām',V(S.runat)],
-        ['Precizējums',V(S.prieksmPrec)],['Vai vienmēr tā?',V(S.prieksmVienmer)],['Uztvere',V(S.uztvere)],
-        ['Gribētu apmeklēt',V(S.gribetu)],['Pašpārvalde, NVO',V(S.pasparvalde)],['Pienākumi mājās',V(S.pienakumi)],['Ko vēl varētu darīt',V(S.varetu)]];}
-    case 'merkis':{const r=riScore();
-      return[['Trīs iespējamās profesijas',S.top3.some(has)?S.top3.map((tt,i)=>tt?`<div>${i+1}. ${esc(tt)}${String(i)===S.izvirzita?' <b>★ galvenā</b>':''}</div>`:'').join(''):''],
-        ['Kas piesaista',V(S.merkKapec)],['Kas nav skaidrs',V(S.merkNeskaidrs)],['Vērtības',V(S.vertibas)],
+      return[['Patīk mācību priekšmeti',f('p')],['Nepatīk',f('n')],['Neitrāli',f('x')+pad],
+        ['Loma grupā: tas esmu es',g('g')],['Loma grupā: dažreiz',g('y')],['Loma grupā: nav par mani',g('r')],
+        ['Vai Tev ir hobijs vai mīļākā nodarbošanās?',V(S.hobijs)],
+        ['Kādus pulciņus, kursus vai sporta nodarbības Tu apmeklē?',V(S.pulcini)],
+        ['Par ko Tu varētu runāt stundām ilgi?',V(S.runat)],
+        ['Precizē, kas tieši patīk vai nepatīk',V(S.prieksmPrec)],['Vai tā ir bijis vienmēr?',V(S.prieksmVienmer)],
+        ['Kā Tev vieglāk uztvert informāciju stundās?',V(S.uztvere)],
+        ['Kādus pulciņus Tu gribētu apmeklēt?',V(S.gribetu)],
+        ['Vai darbojies skolēnu pašpārvaldē vai NVO?',V(S.pasparvalde)],
+        ['Kādi ir Tavi pienākumi ģimenē un mājās?',V(S.pienakumi)],['Ko vēl Tu varētu darīt?',V(S.varetu)]];}
+    case 'merkis':{const r=riScore(),mr=merkScore();
+      return[['Manas trīs iespējamās profesijas',S.top3.some(has)?S.top3.map((tt,i)=>tt?`<div>${i+1}. ${esc(tt)}${String(i)===S.izvirzita?' <b>★ galvenā</b>':''}</div>`:'').join(''):''],
+        ['Kas Tevi šajā profesijā visvairāk piesaista?',V(S.merkKapec)],
+        ['Kas Tev par šo profesiju vēl nav skaidrs?',V(S.merkNeskaidrs)],
+        ...MERK_TESTS.map(([k,q,opts])=>[q,(S.merkT[k]!==undefined&&S.merkT[k]!=='')?`<span class="v">${esc(opts[+S.merkT[k]][0])}</span>`:'']),
+        ['Kas Tev dzīvē ir vissvarīgākais? (trīs vērtības)',V(S.vertibas)],
         ['Interešu tests',r.done?r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
-        ['Algots darbs',V(S.darbs)],['Patika, nepatika',V(S.darbsPat)],['Naudas nozīme',V(S.nauda)]];}
+        ['Skolēns pabeidzis soli',S.gatavs?'<b style="color:var(--orange)">Jā, gaida</b>':'']];}
+    case 'izpete':{const sp=izpScore();
+      return[['Izpētes gatavība',sp.answered?Math.round((sp.y+sp.part*0.5)/sp.total*100)+'%':''],
+        ...IZPETE_TESTS.map(([k,q])=>[q,S.izpT[k]?`<span class="v ${S.izpT[k]==='p'?'g':S.izpT[k]==='n'?'r':''}">${S.izpT[k]==='p'?'Jā':S.izpT[k]==='x'?'Daļēji':'Nē'}</span>`:'']),
+        ['Kā Tu to uzzināji?',V(S.izpVeidi)],
+        ['Par kuru profesiju Tu zini visvairāk?',V(S.izpKo)],
+        ['Ko Tu uzzināji, kas Tevi pārsteidza?',V(S.izpUzz)],
+        ['Ko Tu gribētu redzēt vai izmēģināt klātienē?',V(S.izpKlat)],
+        ['Kādus jautājumus uzdotu ēnu devējam?',V(S.enuJaut)],
+        ['Radošā uzdevuma domas',V(S.sapnis)],
+        ...MITI.map(([k,q,ats])=>['Mīts vai realitāte: '+q,S.miti[k]?`<span class="v ${S.miti[k]===ats?'g':'r'}">${S.miti[k]==='mits'?'Mīts':S.miti[k]==='taisniba'?'Taisnība':'Nezinu'}</span>`:''])];}
     case 'modulis':{const sel=MODULI.filter(m=>R.K.moduli.includes(m[0]));
-      if(!sel.length)return[['Modulis','<span class="empty">nav izvēlēts</span>']];
-      const out=[];sel.forEach(([id,tt,qs])=>{out.push(['Modulis','<b>'+esc(tt)+'</b>']);qs.forEach((q,i)=>out.push([q,V(S.mod[id+'_'+i])]));});return out;}
-    case 'iestades':return[['Mācību iestādes',iestRows()]];
-    case 'enu':return[['Ēnošanas pieredze',S.enots.filter(e=>has(e)).map(e=>`<div><b>${esc(e.p)}</b>${e.pat?' — patika: '+esc(e.pat):''}${e.nep?'; nepatika: '+esc(e.nep):''}</div>`).join('')],
-      ['Jautājumi ēnu devējam',V(S.enuJaut)],['Radošā uzdevuma domas',V(S.sapnis)],
-      ['Temperaments',S.temperaments?(TEMPER.find(x=>x[0]===S.temperaments)||['',''])[1]:''],['Testu rezultāti',V(S.testi)]];
+      const out=[];
+      sel.forEach(([id,tt,,qs])=>{out.push(['Sadaļa','<b>'+esc(tt)+'</b>']);qs.forEach((q,i)=>out.push([q,V(S.mod[id+'_'+i])]));});
+      if(!sel.length)out.push(['Sadaļa','<span class="empty">nav izvēlēta</span>']);
+      out.push(['Iestādes, par kurām skolēns grib uzzināt',V(S.iestJaut)]);
+      return out;}
+    case 'kriteriji':{const m=mitiScore();
+      return[['Ļoti svarīgi',kritTop().map(x=>`<span class="v g">${esc(x)}</span>`).join('')],
+        ['Vidēji svarīgi',kritMid().map(x=>`<span class="v">${esc(x)}</span>`).join('')],
+        ['Nav svarīgi',kritLow().map(x=>`<span class="v r">${esc(x)}</span>`).join('')],
+        ['Nav atzīmēts',SKOLAS_KRIT.filter(([k])=>!S.krit[k]).length?`<span class="empty">${esc(SKOLAS_KRIT.filter(([k])=>!S.krit[k]).map(([,q])=>q).join(', '))}</span>`:''],
+        ['Kas Tevi visvairāk uztrauc?',V(S.skersli)],
+        ['Mīts vai realitāte',m.ans?`pareizi ${m.ok} no ${m.ans}`:'']];}
+    case 'salidz':return[['Skolēna nosauktās iestādes',V(S.iestJaut)],
+      ['Rādīt skolēnam',R.K.iestOn?'Jā':'Nē'],
+      ['Salīdzinājums',salidzTable(false)]];
+    case 'saubas':return[['Kas Tev vēl nav skaidrs?',V(S.sb1)],['Kas Tevi šajā izvēlē visvairāk uztrauc?',V(S.sb2)],
+      ['Ko par šo izvēli saka ģimene?',V(S.sb3)],['Ko pajautāsi atvērto durvju dienā?',V(S.sb4)]];
+    case 'izvele':return[['1. vieta',V(S.iz1)],['2. vieta',V(S.iz2)],['3. vieta',V(S.iz3)],
+      ['Rezerves variants',V(S.izB)],['Kas jāizdara un līdz kad',V(S.izD)]];
     case 'nosl':return[['Vērtējums sākumā',R.S.skalaSak?R.S.skalaSak+' / 10':''],['Vērtējums beigās',R.S.skalaBeig?R.S.skalaBeig+' / 10':'']];
   }
   return[];
 }
-function dlHTML(id){return '<dl>'+rows(id).map(([l,v])=>`<dt>${l}</dt><dd>${v||'<span class="empty">—</span>'}</dd>`).join('')+'</dl>';}
+function dlHTML(id){
+  const cur=rows(id);let base=null;
+  if(R.K.base){const keep=R.S;R.S=R.K.base;try{base=rows(id);}catch(err){base=null;}R.S=keep;}
+  return '<dl>'+cur.map(([l,v],i)=>{
+    const old=base&&base[i]&&base[i][0]===l?base[i][1]:'';
+    const tag=(v&&old&&old===v)?` <span class="atag">${esc(R.K.baseLabel||'iepriekš')}</span>`:'';
+    return `<dt>${l}${tag}</dt><dd>${v||'<span class="empty">—</span>'}</dd>`;}).join('')+'</dl>';
+}
 
 /* Iespējamās sakritības */
 const STOP=new Set('arī bija būtu būt esmu viņš viņa viņam viņai tāpēc tāds tāda kaut kurš kura kuru ļoti visu vienmēr jebkurš tikai labi labs laba patīk nepatīk mani manī manas mans mana savu viņu viņiem kāpēc tieši tomēr tiem tās tajā tāpat citu citi citas'.split(' '));
@@ -971,12 +1247,22 @@ function kView(i){
       <select data-act="prog" style="border:1.5px solid var(--line);border-radius:6px;padding:4px">
         ${Object.keys(PROG).map(k=>`<option value="${k}" ${R.K.prog===k?'selected':''}>${esc(PROG[k].n)}</option>`).join('')}
       </select></span>
-    ${R.K.prog==='B'?`<span>Padziļinātā sadaļa:</span>${MODULI.map(([id,t])=>`<label style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-act="mod" data-v="${id}" ${R.K.moduli.includes(id)?'checked':''}> ${esc(t)}</label>`).join('')}`:''}
+    ${R.K.prog==='B'?`<span>Padziļinātā sadaļa:</span>${MODULI.map(([id,t,d])=>`<label style="display:inline-flex;gap:4px;align-items:center" title="${esc(d)}"><input type="checkbox" data-act="mod" data-v="${id}" ${R.K.moduli.includes(id)?'checked':''}> ${esc(t)}</label>`).join('')}`:''}
     <button class="btn small" data-act="code">Ielādēt datu kodu</button>
     <button class="btn small" data-act="import">Atvērt saglabāto failu</button></div>`;
   if(id!=='nosl')return tb+`<div class="kgrid">
     <div class="card ans"><h3>Skolēna atbildes</h3><div id="ans">${dlHTML(id)}</div></div>
-    <div>${(id==='sapni'||id==='merkis')?`<div id="hintBox">${hintsHTML()}</div>`:''}
+    <div>${id==='merkis'?`<div id="merkRec">${merkRecHTML()}</div>`:''}
+      ${(id==='sapni')?`<div id="hintBox">${hintsHTML()}</div>`:''}
+      ${id==='izpete'?`<div class="card accent" id="izpRes" style="margin-bottom:16px">${izpResHTML(false)}</div>`:''}
+      ${id==='kriteriji'?`<div class="card accent" id="kritRes" style="margin-bottom:16px">${kritResHTML()}</div>`:''}
+      ${id==='salidz'?`<div class="card" style="margin-bottom:16px">
+        <h3>Sagatavo mācību iestādes</h3>
+        <p class="hint" style="margin-top:-6px">Aizpildi iepriekš. Skolēns tās redz tikai tad, kad ieliec ķeksi. Tās nonāk arī uzdevuma lapā un salīdzinājuma lapā.</p>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--navy);margin:8px 0">
+          <input type="checkbox" id="iestCb" ${R.K.iestOn?'checked':''} style="width:18px;height:18px;accent-color:var(--orange)">
+          Rādīt skolēnam</label>
+        ${iestIn()}</div>`:''}
       <div class="card">${fld('Manas piezīmes','P.notes.'+id,{area:1,rows:10,hint:'Šīs piezīmes skolēns neredz. Tās tiek iekļautas konsultanta PDF.'})}</div></div></div>`;
   return tb+`<div class="kgrid" style="grid-template-columns:1fr 1fr">
     <div>
@@ -987,6 +1273,7 @@ function kView(i){
         ${fld('Nākamā tikšanās','K.nakama',{ph:'Piemēram, 12. novembrī'})}</div>
       <div class="actions">
         <button class="btn primary" data-act="pdfU">Uzdevuma lapa skolēnam</button>
+        ${R.K.prog==='C'?'<button class="btn primary" data-act="pdfC">Salīdzinājuma lapa</button>':''}
         <button class="btn primary" data-act="pdfS">Skolēna PDF</button>
         <button class="btn" data-act="pdfK">Konsultanta PDF</button>
         <button class="btn" data-act="save">Saglabāt darba failu</button>
@@ -1028,7 +1315,17 @@ function render(){
       :extras('Iepriekšējā reizē',sumHTML(R.K.sum,true));
   }
   h+=ROLE==='skolens'?SVIEW[s.id]():kView(STEP);
-  if(ROLE==='skolens')h+=`<div class="navbar"><button class="btn" data-act="prev" ${STEP===0?'disabled':''}>Atpakaļ</button>${STEP<STEPS.length-1?'<button class="btn primary" data-act="next">Tālāk</button>':'<span></span>'}</div>`;
+  if(ROLE==='skolens'){
+    const waitMod=(s.id==='merkis'&&MODE==='online'&&!R.K.moduli.length);
+    const nextBtn=STEP<STEPS.length-1
+      ? (waitMod
+         ? (R.S.gatavs
+            ? '<span class="waitmsg">Paldies! Karjeras konsultante izvēlas nākamo sadaļu.</span>'
+            : '<button class="btn primary" data-act="gatavs">Gatavs</button>')
+         : '<button class="btn primary" data-act="next">Tālāk</button>')
+      : '<span></span>';
+    h+=`<div class="navbar"><button class="btn" data-act="prev" ${STEP===0?'disabled':''}>Atpakaļ</button>${nextBtn}</div>`;
+  }
   $('#main').innerHTML=h;
   $('#main').scrollTop=0;window.scrollTo(0,0);
 }
@@ -1045,11 +1342,13 @@ function refreshAns(){
 /* ============ Notikumi ============ */
 let sendT={};
 function changed(path){
+  if(ROLE==='konsultants'&&path.startsWith('K.iest'))queue('i');
   if(ROLE==='skolens'&&path.startsWith('S.'))queue('s');
 
   if(ROLE==='konsultants'&&path.startsWith('S.'))send({t:'sf',f:path,v:getP(R,path)});
 }
-function queue(kind){clearTimeout(sendT[kind]);sendT[kind]=setTimeout(()=>send(kind==='s'?{t:'s',s:R.S}:{t:'k',k:R.K}),250);}
+function queue(kind){clearTimeout(sendT[kind]);sendT[kind]=setTimeout(()=>send(
+  kind==='s'?{t:'s',s:R.S}:kind==='i'?{t:'iest',v:{on:R.K.iestOn,iest:R.K.iest}}:{t:'k',k:R.K}),250);}
 
 document.addEventListener('input',e=>{
   const f=e.target.closest('[data-f]');if(!f)return;
@@ -1062,6 +1361,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='followCb'){follow=e.target.checked;if(follow)goStep(studentStep);}
   if(e.target.matches('select[data-act="prog"]')){setProg(e.target.value);send({t:'prog',v:R.K.prog});render();}
   if(e.target.id==='sumCb'){R.K.sum.on=e.target.checked;send({t:'sum',v:R.K.sum});}
+  if(e.target.id==='iestCb'){R.K.iestOn=e.target.checked;send({t:'iest',v:{on:R.K.iestOn,iest:R.K.iest}});}
 });
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
@@ -1094,6 +1394,12 @@ document.addEventListener('click',e=>{
     case 'ms':{const k=b.dataset.k;R.S.macStils[k]=R.S.macStils[k]===b.dataset.v?'':b.dataset.v;rerender('S.macStils');updTest();changed('S.');break;}
     case 'mod':{const id=b.dataset.v;const a=R.K.moduli;const i=a.indexOf(id);
       if(b.checked&&i<0)a.push(id);if(!b.checked&&i>=0)a.splice(i,1);send({t:'mod',v:a});if(STEPS[STEP].id==='modulis')render();break;}
+    case 'kr':{const k=b.dataset.k;R.S.krit[k]=R.S.krit[k]===b.dataset.v?'':b.dataset.v;rerender('S.krit');updTest();changed('S.');break;}
+    case 'my':{const k=b.dataset.k;R.S.miti[k]=R.S.miti[k]===b.dataset.v?'':b.dataset.v;rerender('S.miti');changed('S.');break;}
+    case 'iv':{const k=b.dataset.k;R.S.iestV[k]=R.S.iestV[k]===b.dataset.v?'':b.dataset.v;rerender('S.iestV');changed('S.');break;}
+    case 'mt':{const k=b.dataset.k;R.S.merkT[k]=R.S.merkT[k]===b.dataset.v?'':b.dataset.v;rerender('S.merkT');updTest();changed('S.');break;}
+    case 'iz':{const k=b.dataset.k;R.S.izpT[k]=R.S.izpT[k]===b.dataset.v?'':b.dataset.v;rerender('S.izpT');updTest();changed('S.');break;}
+    case 'gatavs':{R.S.gatavs=true;changed('S.');render();break;}
     case 'vt':{const k=b.dataset.k;R.S.vertT[k]=R.S.vertT[k]===b.dataset.v?'':b.dataset.v;rerender('S.vertT');updTest();changed('S.');break;}
     case 'ri':{const k=b.dataset.k;R.S.riasec[k]=R.S.riasec[k]===b.dataset.v?'':b.dataset.v;rerender('S.riasec');updTest();changed('S.');break;}
     case 'sk':{const s=b.dataset.s;R.S.prasmesT[s]=R.S.prasmesT[s]===b.dataset.v?'':b.dataset.v;rerender('S.prasmesT');updTest();changed('S.');break;}
@@ -1108,6 +1414,7 @@ document.addEventListener('click',e=>{
     case 'pdfS':printDoc('s');break;
     case 'pdfK':printDoc('k');break;
     case 'pdfU':printDoc('u');break;
+    case 'pdfC':printDoc('c');break;
     case 'export':exportFile();break;
     case 'save':exportFile(true);break;
     case 'code':{const v=prompt('Ielīmē skolēna datu kodu (sākas ar KK):');if(v&&v.trim())loadCode(v.trim()).then(ok=>{if(ok)send({t:'restore',s:R.S});});break;}
@@ -1181,14 +1488,16 @@ function onData(m){
   if(ROLE==='konsultants'){
     if(m.t==='hello'){
       if(isEmptyS(m.s)&&!isEmptyS(R.S))send({t:'restore',s:R.S});else{R.S=m.s;}
-      send({t:'prog',v:R.K.prog});send({t:'mod',v:R.K.moduli});send({t:'sum',v:R.K.sum});setStudentStep(m.n||0);refreshAns();
+      send({t:'prog',v:R.K.prog});send({t:'mod',v:R.K.moduli});send({t:'sum',v:R.K.sum});
+      send({t:'iest',v:{on:R.K.iestOn,iest:R.K.iest}});setStudentStep(m.n||0);refreshAns();
     }
     else if(m.t==='s'){R.S=m.s;refreshAns();}
     else if(m.t==='step'){setStudentStep(m.n);}
   }else{
-    if(m.t==='mod'){R.K.moduli=m.v;if(STEPS[STEP].id==='modulis')render();}
+    if(m.t==='mod'){R.K.moduli=m.v;const id=STEPS[STEP].id;if(id==='modulis'||id==='merkis')render();}
     else if(m.t==='prog'){setProg(m.v);render();}
     else if(m.t==='sum'){R.K.sum=m.v;render();}
+    else if(m.t==='iest'){R.K.iestOn=m.v.on;R.K.iest=m.v.iest;if(STEPS[STEP].id==='salidz')render();}
     else if(m.t==='restore'){R.S=m.s;render();}
     else if(m.t==='sf'){setP(R,m.f,m.v);if(STEPS[STEP].id==='sakums')render();}
   }
@@ -1238,6 +1547,11 @@ $('#btnProgBack').onclick=()=>{$('#progStep').style.display='none';$('#start').s
 $('#btnFile').onclick=()=>{fileFrom='start';$('#fileIn').click();};
 $('#fileMsg').addEventListener('click',e=>{
   const b=e.target.closest('[data-cont]');if(!b)return;
+  if(b.dataset.cont==='today'){
+    R.S.datums=today();R.S.laiks=now();
+    $('#contMsg').innerHTML=`Turpini <b>${esc(R.S.nr)}. konsultāciju</b> ar šodienas datumu ${esc(fmtDate(R.S.datums))}`;
+    return;
+  }
   const next=b.dataset.cont==='next';
   if(next){
     const n=parseInt(R.S.nr,10);R.S.nr=isNaN(n)?'2':String(n+1);
@@ -1249,7 +1563,8 @@ $('#fileMsg').addEventListener('click',e=>{
   $('#fileMsg').querySelectorAll('[data-cont]').forEach(x=>x.classList.toggle('primary',x===b));
   $('#contMsg').innerHTML=next
     ? `Jauna konsultācija: <b>${esc(R.S.nr)}. reize</b>, ${esc(fmtDate(R.S.datums))} Skolēns redzēs iepriekšējās reizes kopsavilkumu.`
-    : `Turpini <b>${esc(R.S.nr)}. konsultāciju</b> ar datumu ${esc(fmtDate(R.S.datums))} Datums un numurs netiek mainīti, un skolēnam kopsavilkums netiek rādīts. Piezīmes vari pabeigt arī bez savienojuma.`;
+    : `Turpini <b>${esc(R.S.nr)}. konsultāciju</b> ar datumu ${esc(fmtDate(R.S.datums))} Numurs netiek mainīts.
+        <button type="button" class="btn small" data-cont="today" style="margin-left:8px">Ielikt šodienas datumu</button>`;
 });
 $('#btnHost').onclick=()=>showProgStep('host');
 $('#btnConsOffline').onclick=()=>showProgStep('offline');
@@ -1270,7 +1585,8 @@ function fileBase(){return (R.S.name||'skolens').trim().replace(/\s+/g,'_').repl
 function exportFile(full){
   const data=full?{v:1,kind:'karjeras-kompass',s:R.S,k:R.K,p:R.P}:{v:1,kind:'karjeras-kompass',s:R.S};
   const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(full?'konsultacija_':'karjeras_kompass_')+fileBase()+'_'+(R.S.datums||today())+'.json';
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(full?('Kompass_'+(R.K.prog||'A')+'_'):'Skolena_atbildes_')+fileBase()+'_'+(R.S.datums||today())+(R.S.nr?('_Nr'+R.S.nr):'')+'.json';
   document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
 }
 let fileFrom='app',loadedFrom='';
@@ -1284,8 +1600,10 @@ $('#fileIn').addEventListener('change',e=>{
       R.S=Object.assign(newS(),d.s);
       if(d.k)R.K=Object.assign(newK(),d.k);
       if(d.p)R.P=Object.assign(newP(),d.p);
+      if(from!=='start'){R.K.base=JSON.parse(JSON.stringify(R.S));R.K.baseLabel=(PROG[R.K.prog]?R.K.prog:'A')+' tests';}
       if(from==='start'){
         loadedFrom=PROG[R.K.prog]?R.K.prog:'';
+        R.K.base=JSON.parse(JSON.stringify(R.S));R.K.baseLabel=loadedFrom?loadedFrom+' tests':'iepriekš';
         R.K.sum=makeSum(prevNr,prevDate,loadedFrom);
         const n=parseInt(prevNr,10);const nextNr=isNaN(n)?'2':String(n+1);
         $('#fileMsg').innerHTML=`Ielādēts: <b>${esc(R.S.name||'bez vārda')}</b>`+
@@ -1351,6 +1669,7 @@ async function loadCode(code){
     const s=await readCode(code);
     if(!isEmptyS(R.S)&&!confirm('Aizstāt pašreizējās skolēna atbildes ar datu koda saturu?'))return false;
     R.S=Object.assign(newS(),s);
+    R.K.base=JSON.parse(JSON.stringify(R.S));R.K.baseLabel='anketa';
     if(ROLE)render();
     return true;
   }catch(e){alert('Šis nav derīgs Karjeras kompasa datu kods. Pārbaudi, vai ir nokopēts viss teksts, kas sākas ar KK.');return false;}
@@ -1377,7 +1696,7 @@ function printDoc(kind){
         <div class="p-sec"><h2>Mans ceļš</h2>${dl([['Bērnībā gribēju kļūt',V(S.profBerniba)],['Tagad mani interesē',V(S.profTagad)],['Patīk mācīties',V([...PRIEKSMETI,...S.prieksmCustom].filter(s=>S.prieksmeti[s]==='p'))],['Man padodas',V([...PRIEKSMETI,...S.prieksmCustom].filter(s=>S.padodas[s]))],['Mans moto',V(S.moto)]])}</div>
       </div>
       ${(has(S.g1)||has(S.g2)||has(S.g3)||has(S.g4)||vertTop().length)?`<div class="p-sec"><h2>Mani mērķi</h2>${dl([['Darbā svarīgi',V(vertTop())],['Darbā vidēji',V(vertMid())],['Līdz mācību gada beigām',V(S.g1)],['Pēc 9. klases',V(S.g2)],['Sapņu darbs',V(S.g3)],['Kas man jāiemācās',V(S.g4)]])}</div>`:''}
-      ${iestRows()?`<div class="p-sec"><h2>Mācību iestādes, ko apsveru</h2><div class="p-box">${iestRows()}</div></div>`:''}
+      ${(K.iestOn&&iestRows())?`<div class="p-sec"><h2>Ieteicamās mācību iestādes</h2><div class="p-box">${iestRows()}</div></div>`:''}
       ${has(K.stipras)||K.jomas.length||has(K.ieteikumi)||has(K.uzdevums)||has(K.norunats)?`<div class="p-sec"><h2>Konsultanta ieteikumi</h2><div class="p-box">${dl([['Stiprās puses',V(K.stipras)],['Jomas izpētei',V(K.jomas)],['Ieteikumi',V(K.ieteikumi)],['Uzdevums',V(K.uzdevums)],['Ko norunājām',V(K.norunats)]])}</div></div>`:''}
       <div class="p-cols">
         ${soli.length?`<div class="p-sec"><h2>Mani nākamie soļi</h2>${soli.map(s=>`<div style="padding:2px 0"><span class="cb"></span>${esc(s.t)}</div>`).join('')}</div>`:''}
@@ -1385,13 +1704,26 @@ function printDoc(kind){
       </div>
       <div class="p-sec"><h2>Cik skaidri redzu savu nākotni</h2>Konsultācijas sākumā: <b>${S.skalaSak||'—'} / 10</b>. Konsultācijas beigās: <b>${S.skalaBeig||'—'} / 10</b>.${K.nakama?` Nākamā tikšanās: <b>${esc(K.nakama)}</b>.`:''}</div>
       <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
+  }else if(kind==='c'){
+    const cols=salidzCols();
+    h=`<div class="p-head"><h1>Mācību iestāžu salīdzinājums</h1><div>${who}</div></div>
+      ${kritTop().length?`<div class="p-sec"><h2>Man svarīgi</h2>${kritTop().map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}
+      ${cols.length?`<table class="cmp"><thead><tr><th></th>${cols.map(o=>`<th>${esc(o.x.n||('Iestāde '+(o.i+1)))}</th>`).join('')}</tr></thead><tbody>
+        ${IEST_LAUKI.slice(1).map(([f,l])=>`<tr><th>${esc(l)}</th>${cols.map(o=>`<td>${nl(o.x[f]||'')||'—'}</td>`).join('')}</tr>`).join('')}
+        <tr><th>Mans vērtējums</th>${cols.map(o=>{const v=R.S.iestV[o.i];return `<td>${v==='p'?'Patīk':v==='x'?'Vēl nezinu':v==='n'?'Nepatīk':'—'}</td>`;}).join('')}</tr>
+        <tr><th>Mans jautājums</th>${cols.map(o=>`<td>${nl(R.S.iestQ[o.i]||'')||'—'}</td>`).join('')}</tr>
+        </tbody></table>`:'<p>Iestādes vēl nav sagatavotas.</p>'}
+      ${(has(S.iz1)||has(S.iz2)||has(S.iz3))?`<div class="p-sec"><h2>Mana secība</h2><ol>${[S.iz1,S.iz2,S.iz3].filter(has).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${S.izB?`<div>Rezerves variants: ${esc(S.izB)}</div>`:''}</div>`:''}
+      ${has(S.izD)?`<div class="p-sec"><h2>Kas jāizdara un līdz kad</h2><div class="p-box">${nl(S.izD)}</div></div>`:''}
+      ${has(S.sb4)?`<div class="p-sec"><h2>Ko pajautāt atvērto durvju dienā</h2><div class="p-box">${nl(S.sb4)}</div></div>`:''}
+      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
   }else if(kind==='u'){
     const soli=K.soli.filter(s=>s.on);const res=resList();const lnk=linkList2();
     const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
     h=`<div class="p-head"><h1>Mans uzdevums līdz nākamajai reizei</h1><div>${who}</div></div>
       ${has(K.uzdevums)?`<div class="p-sec"><h2>Uzdevums</h2><div class="p-box">${nl(K.uzdevums)}</div></div>`:''}
       ${has(K.norunats)?`<div class="p-sec"><h2>Ko norunājām</h2><div class="p-box">${nl(K.norunats)}</div></div>`:''}
-      ${iestRows()?`<div class="p-sec"><h2>Mācību iestādes, ko apsveru</h2><div class="p-box">${iestRows()}</div></div>`:''}
+      ${(K.iestOn&&iestRows())?`<div class="p-sec"><h2>Ieteicamās mācību iestādes</h2><div class="p-box">${iestRows()}</div></div>`:''}
       ${soli.length?`<div class="p-sec"><h2>Nākamie soļi</h2>${soli.map(s=>`<div style="padding:2px 0"><span class="cb"></span>${esc(s.t)}</div>`).join('')}</div>`:''}
       ${lnk.length||res.length?`<div class="p-sec p-link"><h2>Saites</h2><ul>${[...lnk,...res].map(r=>`<li>${r.u?`<a href="${esc(r.u)}">${esc(r.n)}</a><br><span style="font-size:9pt">${esc(r.u)}</span>`:esc(r.n)}</li>`).join('')}</ul></div>`:''}
       ${dl([['Jomas izpētei',V(K.jomas)],['Nākamā tikšanās',V(K.nakama)]])}
@@ -1404,7 +1736,8 @@ function printDoc(kind){
   }
   $('#print').innerHTML=h;
   const old=document.title;
-  document.title=(kind==='s'?'Skolena_PDF_':kind==='u'?'Uzdevuma_lapa_skolenam_':'Konsultanta_PDF_')+fileBase()+'_'+(S.datums||today())+(S.nr?('_Nr'+S.nr):'');
+  document.title=(kind==='s'?'Skolena_PDF_':kind==='u'?'Uzdevuma_lapa_skolenam_':kind==='c'?'Salidzinajuma_lapa_':'Konsultanta_PDF_')+fileBase()+'_'+(S.datums||today())+(S.nr?('_Nr'+S.nr):'');
+  $('#pageStyle').textContent=(kind==='c')?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4 portrait;margin:13mm 14mm}';
   setTimeout(()=>{window.print();document.title=old;},50);
 }
 
