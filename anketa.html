@@ -473,9 +473,7 @@ const VIEW={
   </div>`,
  tests:()=>`
   <p class="lead">Atzīmē, cik ļoti Tev patiktu katru no šīm lietām darīt. Domā ātri, pirmā doma parasti ir precīzākā.</p>
-  <div class="card" style="margin-bottom:16px"><h3>Testa apjoms</h3>
-    <p class="hint" style="margin-top:-4px">Īsajā testā ir 12 apgalvojumi par interesēm un 8 par prasmēm, pilnajā — 30 un 12.</p>
-    ${segW('S.testLen',[['pilns','Pilnais'],['iss','Īsais']])}</div>
+  <p class="hint" style="margin-top:-8px;margin-bottom:16px">Divdesmit apgalvojumi: 12 par interesēm un 8 par prasmēm.</p>
   <div class="kgrid">
     <div>
       <div class="card"><h3>Ko Tev patiktu darīt?</h3><div data-w="S.riasec">${riIn()}</div></div>
@@ -548,7 +546,7 @@ function printDoc(){
   const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
   $('#print').innerHTML=`<div class="p-head"><h1>Karjeras anketa</h1><div>${[S.name,S.klase?S.klase+' klase':'',fmtDate(S.datums)].filter(Boolean).map(esc).join(', ')}</div></div>
    <div class="p-sec"><h2>Par mani</h2>${dl([['Galvenais jautājums',V(S.gaidas)],['Cik skaidri zinu nākotni',S.skalaSak?S.skalaSak+' / 10':''],...IEPAZ.map(([k,q])=>[q,V(S[k])])])}</div>
-   <div class="p-sec"><h2>Interešu tests</h2>${dl([['Testa apjoms',S.testLen==='iss'?'Īsais':'Pilnais'],['Atbildēts',r.done+' no '+r.total],
+   <div class="p-sec"><h2>Interešu tests</h2>${dl([['Atbildēts',r.done+' no '+r.total],
      ['Spēcīgākie tipi',r.done?r.arr.slice(0,3).map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
      ['Visi tipi',r.done?r.arr.map(x=>`<span class="v">${x.n} ${x.pct}%</span>`).join(''):''],
      ['Profesiju piemēri',r.done?esc(r.arr.slice(0,3).map(x=>TIPI[x.c].p.slice(0,4).join(', ')).join('; ')):''],
