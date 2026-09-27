@@ -132,6 +132,12 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
 .mktext.empty{color:#7A8794;font-style:italic}
 .mkmsg{font-size:13.5px;color:var(--orange);font-weight:600}
 .mkmsg:empty{display:none}
+.anksec{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;padding:12px 14px;margin-bottom:16px}
+.anksec h3{margin:0 0 6px}
+.anksec ol{margin:0;padding-left:20px}
+.anksec ol li{margin-bottom:7px;font-size:14.5px;line-height:1.5}
+.anksec .hint{margin:6px 0 0}
+.fromank{font-size:13.5px;line-height:1.45;color:#3A4A5A;background:#F4F6F9;border-left:3px solid var(--blue);border-radius:0 6px 6px 0;padding:6px 10px;margin:-2px 0 10px}
 .mklab{font-family:var(--head);font-weight:700;color:var(--navy);font-size:13px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px}
 .chip .x{margin-left:6px;font-weight:700}
 .count{font-size:13px;color:var(--muted);margin-left:auto}
@@ -779,7 +785,7 @@ function rerender(path){
 }
 
 /* ============ Interešu tests ============ */
-function riItems(){return RIASEC.filter(i=>R.S.testLen==='pilns'||i[2]);}
+function riItems(){return RIASEC.filter((i,k)=>R.S.testLen==='pilns'||i[2]||R.S.riasec[k]);}
 function skItems(){return PRASMJU_TESTS.filter(i=>R.S.testLen==='pilns'||i[1]);}
 function riIn(){
   const items=riItems();
@@ -795,8 +801,8 @@ function skIn(){
   return `<div class="items">${rows}</div>`;
 }
 // Apvienots stila bloks: septiņi darba stila un trīs mācīšanās apgalvojumi
-function stilsItems(){return STILS.filter(([k])=>!['plans','detal','lem'].includes(k));}
-function macItems(){return [0,1,2];}
+function stilsItems(){return STILS.filter(([k])=>!['plans','detal','lem'].includes(k)||R.S.stils[k]);}
+function macItems(){return MACST.map((x,i)=>i).filter(i=>i<3||R.S.macStils[i]);}
 function stilsMacIn(){
   WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};
   return `<div data-w="S.stils">${stilsIn()}</div>
@@ -1078,6 +1084,9 @@ function testResHTML(){
     ${top.map(x=>`<div class="tipcard"><h4>${x.n} (${x.pct}%)</h4><div>${esc(TIPI[x.c].d)}</div>
       <div class="hint">Profesiju piemēri: ${TIPI[x.c].p.join(', ')}. <a href="https://www.profesijupasaule.lv/" target="_blank" rel="noopener">Profesiju pasaule</a></div></div>`).join('')}
     <div style="margin-top:8px">${arr.map(x=>`<div style="margin-bottom:6px"><span style="font-size:14px">${x.n} ${x.pct}%</span><span class="bar"><span style="width:${x.pct}%"></span></span></div>`).join('')}</div>
+    ${(()=>{const sk=skLists();return (sk.l.length||sk.j.length)?`<div style="margin-top:12px"><b>Prasmju tests no anketas</b>
+      ${sk.l.length?`<div style="margin-top:4px">Labi padodas: ${sk.l.map(x=>`<span class="v g">${esc(x)}</span>`).join('')}</div>`:''}
+      ${sk.j.length?`<div style="margin-top:4px">Vēl jāmācās: ${sk.j.map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}</div>`:'';})()}
     ${mine.length?`<div class="hint" style="margin-top:8px">Profesijas, ko atzīmēji blokos: ${esc(mine.join(', '))}. Vai tās sakrīt ar šo rezultātu?</div>`:''}
     <p class="hint">Tas nav spriedums par Tevi. Tas ir tikai sarunas sākums, un pareizu atbilžu šeit nav.</p>`;
 }
@@ -1110,7 +1119,9 @@ const SVIEW = {
       <div>
         <div class="card"><h3>Kā Tu sevi raksturotu? Izvēlies piecas īpašības.</h3>${chipsW('S.ipasibas',IPASIBAS,5)}</div>
         <div class="card" style="margin-top:16px"><h3>Ko Tu proti vislabāk? Izvēlies piecas prasmes.</h3>${chipsW('S.prasmes',PRASMES,5)}</div>
-        <div class="card" style="margin-top:16px"><h3>Kuri mācību priekšmeti Tev padodas vislabāk?</h3>${chipsW('S.padodasT',PRIEKSMETI,5)}</div>
+        <div class="card" style="margin-top:16px"><h3>Kuri mācību priekšmeti Tev padodas vislabāk?</h3>
+          ${has(R.S.iep1)?`<p class="fromank">Anketā Tu rakstīji: „${esc(R.S.iep1.trim())}”</p>`:''}
+          ${chipsW('S.padodasT',PRIEKSMETI,5)}</div>
         <div style="margin-top:16px">${stDone()?extras('Anketas darba stila apgalvojumi',fillS):fillS}</div>
         <div class="card" style="margin-top:16px"><h3>Kāda ir Tava loma grupā? Izvēlies divas.</h3>${chipsW('S.lomaG',LOMAS.map(x=>x[1]),2,false)}</div>
         <div style="margin-top:16px">${riDone()?extras('Anketas interešu apgalvojumi',fillR):fillR}</div>
@@ -1121,7 +1132,9 @@ const SVIEW = {
       <div>
         <div class="card accent" id="testRes">${testResHTML()}</div>
         <div class="card accent" id="stilsRes" style="margin-top:16px">${stilsResHTML()}</div>
-        <div class="card" style="margin-top:16px"><h3>Ko Tu dari brīvajā laikā visbiežāk? Izvēlies trīs.</h3>${chipsW('S.brivais',BRIVAIS,3)}</div>
+        <div class="card" style="margin-top:16px"><h3>Ko Tu dari brīvajā laikā visbiežāk? Izvēlies trīs.</h3>
+          ${has(R.S.iep3)?`<p class="fromank">Anketā Tu rakstīji: „${esc(R.S.iep3.trim())}”</p>`:''}
+          ${chipsW('S.brivais',BRIVAIS,3)}</div>
         <div style="margin-top:16px">${extras('Papildu jautājumi',
           '<label class="f">Profesijas Tavā ģimenē <span class="opt">neobligāti</span></label>'+tagsW('S.gimProf','Ieraksti profesiju')+
           '<label class="f">Vai tās ir ietekmējušas Tavas intereses?</label>'+segW('S.gimIetekme',[['ja','Jā'],['dalejji','Daļēji'],['ne','Nē']])+
@@ -1320,6 +1333,46 @@ function hintsHTML(){
   return out+'</div>';
 }
 
+// Trīs teikumi par to, ko dod skolēna anketa. Redz tikai konsultants.
+function anketaSecinajums(){
+  const S=R.S,r=riScore(),sk=skLists(),st=stilsProfile(),m=macResult();
+  const iepAtb=IEPAZ.filter(([k])=>has(S[k])).length;
+  if(!r.done&&!sk.l.length&&!st.length&&!iepAtb)
+    return `<div class="anksec"><h3>Ko rāda anketa</h3>
+      <p class="muted">Anketa nav aizpildīta vai kods nav ielādēts. Sāciet ar interešu testu cilnē „Es un mans mērķis”.</p></div>`;
+  const t=[];
+  // 1. Intereses
+  if(r.done>=Math.ceil(r.total*0.5)&&r.arr[0].pct>0){
+    const a=r.arr[0],b=r.arr[1];
+    const tuvu=Math.abs(a.pct-b.pct)<=10;
+    t.push(`Interešu testā izteiktākais ir tips „${a.n}” (${a.pct} %)${tuvu?`, gandrīz līdzvērtīgi ar „${b.n}” (${b.pct} %)`:`, tam seko „${b.n}” (${b.pct} %)`}; tuvākās jomas ir ${TIPI[a.c].p.slice(0,3).join(', ')}.`);
+  } else {
+    t.push(`Interešu tests nav pabeigts — atbildēts ${r.done} no ${r.total} apgalvojumiem, tāpēc tipu procenti vēl nav droši.`);
+  }
+  // 2. Prasmes un darba stils
+  const p1=[],p2=[];
+  if(sk.l.length)p1.push(`kā stiprās puses atzīmētas ${mLst(mLowAll(mCut(sk.l,2)))}`);
+  if(sk.j.length)p1.push(`vēl jāapgūst ${mLst(mLowAll(mCut(sk.j,2)))}`);
+  if(st.length)p2.push(`Darbā vislabāk der ${mLst(mQ(mCut(st,2)))}.`);
+  if(m&&m.top.length)p2.push(`Vielu vieglāk uztver ${mLst(m.top)}.`);
+  if(p1.length||p2.length)
+    t.push([p1.length?`Pēc anketas ${p1.join(', bet ')}.`:'',...p2].filter(Boolean).join(' '));
+  else t.push('Prasmju un darba stila daļa anketā nav aizpildīta, tāpēc par stiprajām pusēm jājautā sarunā.');
+  // 3. No kā sākt
+  const sk0=+S.skalaSak||0;
+  let sak;
+  if(!sk0)sak='Skaidrības pašvērtējums nav atzīmēts, tāpēc to vērts noskaidrot pirmajā minūtē.';
+  else if(sk0<=3)sak=`Skaidrība par nākotni ir zema (${sk0}/10), tāpēc sāciet ar profesiju blokiem, nevis ar konkrētām iestādēm.`;
+  else if(sk0<=7)sak=`Skaidrība ir vidēja (${sk0}/10), tāpēc pārbaudiet, vai skolēna iecerētais virziens sakrīt ar interešu testa rezultātu.`;
+  else sak=`Skaidrība ir augsta (${sk0}/10), tāpēc vairāk laika var veltīt kritērijiem un mācību iestādēm.`;
+  const gj=mCitats(S.gaidas);
+  t.push((has(S.gaidas)?`Skolēna galvenais jautājums: „${gj}”${/[?!]$/.test(gj)?'':'.'} `:'')+sak);
+  return `<div class="anksec"><h3>Ko rāda anketa</h3>
+    <ol>${t.map(x=>`<li>${x}</li>`).join('')}</ol>
+    ${iepAtb?`<p class="hint">Iepazīšanās atbildes (${iepAtb} no ${IEPAZ.length}) ir kreisajā pusē sadaļā „Skolēna atbildes”.</p>`:'<p class="hint">Iepazīšanās jautājumi anketā nav atbildēti.</p>'}
+    <p class="hint">Automātisks kopsavilkums. Tas ir sarunas sākums, nevis vērtējums.</p></div>`;
+}
+
 /* ============ Konsultanta skats ============ */
 function kView(i){
   const id=STEPS[i].id;
@@ -1338,7 +1391,8 @@ function kView(i){
     <button class="btn small" data-act="import">Atvērt saglabāto failu</button></div>`;
   if(id!=='nosl')return tb+`<div class="kgrid">
     <div class="card ans"><h3>Skolēna atbildes</h3><div id="ans">${dlHTML(id)}</div></div>
-    <div>${id==='es'?`<div id="merkRec">${merkRecHTML()}</div><div id="hintBox">${hintsHTML()}</div>`:''}
+    <div>${id==='sakums'?anketaSecinajums():''}
+      ${id==='es'?`<div id="merkRec">${merkRecHTML()}</div><div id="hintBox">${hintsHTML()}</div>`:''}
       ${id==='profesijas'?`<div class="card accent" id="vertRes" style="margin-bottom:16px">${vertResHTML()}</div>
         <div class="card accent" id="profRes" style="margin-bottom:16px">${profResHTML(false)}</div>`:''}
       ${id==='skola'?`<div class="card accent" id="kritRes" style="margin-bottom:16px">${kritResHTML()}</div>
@@ -1405,7 +1459,7 @@ function mLst(a){a=(a||[]).map(x=>String(x||'').trim()).filter(Boolean);
 function mLstQ(a){a=mQ((a||[]).filter(Boolean));
   if(!a.length)return '';if(a.length===1)return a[0];
   return a.slice(0,-1).join(', ')+' un '+a[a.length-1];}
-function mCitats(s){return String(s||'').trim().replace(/[.!?;,]+$/,'');}
+function mCitats(s){return String(s||'').trim().replace(/[.;,]+$/,'');}
 function mLow(s){return s?s.charAt(0).toLowerCase()+s.slice(1):'';}
 function mLowAll(a){return (a||[]).map(mLow);}
 function mQ(a){return (a||[]).map(x=>'„'+x+'”');}
