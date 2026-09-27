@@ -93,6 +93,9 @@ input:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 
 .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
 .chip.full{opacity:.4}
 .limitmsg{width:100%;font-size:13.5px;color:var(--orange);background:var(--orange-soft);border-radius:6px;padding:5px 10px;margin-top:4px}
+.mkbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px;margin:0 0 12px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.mkmsg{width:100%;font-size:13.5px;color:var(--orange);font-weight:600}
+.mkmsg:empty{display:none}
 .chip .x{margin-left:6px;font-weight:700}
 .count{font-size:13px;color:var(--muted);margin-left:auto}
 .addrow{display:flex;gap:6px;margin-top:8px;width:100%}
@@ -1288,6 +1291,7 @@ function kView(i){
         ${sumHTML(R.K.sum,false)}</div>`:''}
     <div class="card accent"><h3>Ieteikumi skolēnam</h3>
       <p class="hint" style="margin-top:-4px">Šo sadaļu skolēns neredz. Tā aizpildāma pēc konsultācijas, un lapu var nosūtīt e-klasē.</p>
+      ${mkBtns()}
       ${fld('Stiprās puses','K.stipras',{area:1,rows:3})}
       <label class="f">Jomas un profesijas izpētei</label>${tagsW('K.jomas','Ieraksti jomu vai profesiju')}
       ${fld('Ieteikumi','K.ieteikumi',{area:1,rows:3})}
@@ -1301,6 +1305,180 @@ function kView(i){
 }
 function soliIn(){WREG['K.soli']={k:'soli'};return R.K.soli.map((s,i)=>`<label><input type="checkbox" data-act="soli" data-i="${i}" ${s.on?'checked':''}> ${esc(s.t)}</label>`).join('')+
   `<div class="addrow"><input type="text" placeholder="Cits solis" data-enter><button type="button" class="btn small" data-act="soliadd">Pievienot</button></div>`;}
+
+/* ============ Ieteikumu melnraksts ============ */
+// Sagatavo ieteikumu melnrakstu no anketas datiem. Konsultants to pārraksta un papildina.
+function mLst(a){a=(a||[]).map(x=>String(x||'').trim()).filter(Boolean);
+  if(!a.length)return '';if(a.length===1)return a[0];
+  // Ja kādā vienumā jau ir saiklis „un”, komats vai domuzīme, uzskaitījumu atdala ar semikolu,
+  // lai teikuma robežas paliek skaidras.
+  if(a.some(x=>/\sun\s|,|—/.test(x)))return a.join('; ');
+  return a.slice(0,-1).join(', ')+' un '+a[a.length-1];}
+function mCitats(s){return String(s||'').trim().replace(/[.!?;,]+$/,'');}
+function mLow(s){return s?s.charAt(0).toLowerCase()+s.slice(1):'';}
+function mLowAll(a){return (a||[]).map(mLow);}
+function mQ(a){return (a||[]).map(x=>'„'+x+'”');}
+function mCut(a,n){return (a||[]).slice(0,n);}
+
+// --- A programma ---
+function mkStiprasA(){
+  const S=R.S,o=[],r=riScore();
+  if(r.done>=Math.ceil(r.total*0.5)&&r.arr[0].pct>0){
+    const t1=r.arr[0],t2=r.arr[1];
+    o.push(`Interešu testā Tev vistuvākais ir tips „${t1.n}” (${t1.pct} %), tam seko „${t2.n}” (${t2.pct} %). ${TIPI[t1.c].d}`);
+  }
+  const sk=skLists();
+  if(sk.l.length)o.push(`Vislabāk Tev padodas: ${mLst(mLowAll(mCut(sk.l,4)))}.`);
+  if(S.ipasibas&&S.ipasibas.length)o.push(`Sevi Tu raksturo ar šādām īpašībām: ${mLst(mLowAll(S.ipasibas))}.`);
+  if(S.prasmes&&S.prasmes.length)o.push(`Prasmes, ko Tu izcel: ${mLst(mLowAll(S.prasmes))}.`);
+  const pad=Object.keys(S.padodas||{}).filter(k=>S.padodas[k]);
+  if(pad.length)o.push(`Mācību priekšmeti, kas Tev padodas: ${mLst(mLowAll(mCut(pad,5)))}.`);
+  const st=stilsProfile();
+  if(st.length)o.push(`Darba stila testā Tu atzīmēji: ${mLst(mQ(mCut(st,4)))}.`);
+  const m=macResult();
+  if(m&&m.top.length)o.push(`Vieglāk Tu mācies ${mLst(m.top)}.`);
+  if(S.lepnums)o.push(`Par savu sasniegumu Tu stāsti tā: „${mCitats(S.lepnums)}”.`);
+  return o.join('\n');
+}
+function mkJomasA(){
+  const r=riScore(),out=[];
+  if(r.done>=Math.ceil(r.total*0.5)&&r.arr[0].pct>0){
+    TIPI[r.arr[0].c].p.slice(0,3).forEach(p=>out.push(p));
+    TIPI[r.arr[1].c].p.slice(0,2).forEach(p=>out.push(p));
+  }
+  (R.S.top3||[]).filter(has).forEach(p=>out.push(String(p).trim()));
+  (R.S.profTagad||[]).forEach(p=>out.push(String(p).trim()));
+  return out;
+}
+function mkIeteikumiA(){
+  const S=R.S,o=[],r=riScore();
+  if(r.done>=Math.ceil(r.total*0.5)&&r.arr[0].pct>0){
+    o.push(`Tuvākajos mēnešos pārbaudi, vai tips „${r.arr[0].n}” Tev tiešām atbilst. To vislabāk var noskaidrot, redzot darbu klātienē vai sarunājoties ar cilvēku, kas šajā jomā strādā.`);
+  }
+  const vt=vertTop();
+  if(vt.length)o.push(`Darbā Tev ir svarīgi: ${mLst(mLowAll(mCut(vt,4)))}. Salīdzini to ar profesijām, par kurām domā, un pārbaudi, vai tās to var nodrošināt.`);
+  const pad=Object.keys(S.padodas||{}).filter(k=>S.padodas[k]);
+  if(pad.length)o.push(`Priekšmeti, kas Tev padodas, ir Tava bāze. Turi tos stabilus līdz eksāmeniem, jo tie paplašina izvēles iespējas pēc 9. klases.`);
+  const sk=skLists();
+  if(sk.j.length)o.push(`Prasmes, ko Tu vēlies apgūt (${mLst(mLowAll(mCut(sk.j,3)))}), ir vērts trenēt jau tagad — pulciņā, projektā vai brīvprātīgajā darbā.`);
+  const st=stilsProfile();
+  if(st.length)o.push(`Izvēloties nākamo skolu, ņem vērā ne tikai programmu, bet arī ceļu uz skolu, atbalstu un vidi. Darba stila tests rāda, kādi apstākļi Tev der vislabāk.`);
+  if(S.g2)o.push(`Tu jau nosauci, kur gribētu mācīties pēc 9. klases. Nākamajā reizē to pārbaudīsim: apskatīsim uzņemšanas prasības, mācību ilgumu un to, kas seko pēc tam.`);
+  return o.join('\n');
+}
+function mkUzdevumsA(){
+  const S=R.S,o=[],r=riScore();let n=0;
+  if(r.done>=Math.ceil(r.total*0.5)&&r.arr[0].pct>0){
+    const p=TIPI[r.arr[0].c].p[0];
+    o.push(`${++n}. Atrodi vienu cilvēku, kas strādā tādā profesijā kā ${p}, un uzdod viņam trīs jautājumus par ikdienas darbu.`);
+    o.push(`${++n}. Portālā „Profesiju pasaule” izlasi par divām profesijām no ieteikto jomu saraksta un pieraksti, kas tajās Tev patīk un kas ne.`);
+  }
+  const sk=skLists();
+  if(sk.j.length)o.push(`${++n}. Izvēlies vienu prasmi no saraksta „gribu iemācīties” un atrodi, kur to var apgūt — pulciņā, kursos vai patstāvīgi.`);
+  if(!S.g2)o.push(`${++n}. Nosauc vismaz vienu skolu, kurā Tu gribētu mācīties pēc 9. klases, un uzraksti, kāpēc tieši to.`);
+  o.push(`${++n}. Parunā ar ģimeni par to, ko uzzināji šajā konsultācijā.`);
+  return o.join('\n');
+}
+
+// --- B programma ---
+function mkStiprasB(){
+  const S=R.S,o=[],mr=merkScore();
+  if(mr.done){
+    const t=mr.arr[0];
+    if(t)o.push(`Mērķa testā Tev visvairāk atbilst ceļš „${t.n}”. ${t.d}`);
+  }
+  if(R.K.moduli&&R.K.moduli.length){
+    const nm=R.K.moduli.map(id=>(MODULI.find(x=>x[0]===id)||['','?'])[1]);
+    o.push(`Konsultācijā mēs padziļināti apskatījām ${nm.length>1?'šādus ceļus':'ceļu'}: ${mLst(mQ(nm))}.`);
+  }
+  const iz=izpScore();
+  if(iz.answered){
+    const pct=Math.round((iz.y+iz.part*0.5)/iz.total*100);
+    o.push(`Par izvēlēto profesiju${S.izpKo?' ('+S.izpKo.trim()+')':''} Tu jau zini ${pct} % no pamatlietām: skaidras ir ${iz.y} no ${iz.total}.`);
+  }
+  const kt=kritTop();
+  if(kt.length)o.push(`Nākamajā skolā Tev ir ļoti svarīgi: ${mLst(mLowAll(kt))}.`);
+  const vd=(S.izpVeidi||[]).filter(v=>v!=='Vēl nav pētīta');
+  if(vd.length)o.push(`Profesijas izpētē Tu jau atzīmēji: ${mLst(mQ(vd))}.`);
+  return o.join('\n');
+}
+function mkJomasB(){
+  const out=[];
+  if(R.S.izpKo)out.push(R.S.izpKo.trim());
+  (R.S.top3||[]).filter(has).forEach(p=>out.push(String(p).trim()));
+  const r=riScore();
+  if(r.done>=Math.ceil(r.total*0.5)&&r.arr[0].pct>0)TIPI[r.arr[0].c].p.slice(0,3).forEach(p=>out.push(p));
+  return out;
+}
+// Izpētes trūkumus pārveido par uzdevumu pavēles formā.
+const MK_UZD = {
+ 'Parunāt ar kādu, kas šajā profesijā strādā':'Parunā ar kādu, kas šajā profesijā strādā',
+ 'Redzēt šo darbu klātienē':'Aizej paskatīties, kā šis darbs izskatās klātienē',
+ 'Noskaidrot, ko šajā darbā dara ikdienā':'Noskaidro, ko šajā darbā dara ikdienā',
+ 'Noskaidrot, kādas prasmes tur ir vajadzīgas':'Noskaidro, kādas prasmes tur ir vajadzīgas',
+ 'Noskaidrot, kur šo profesiju var apgūt':'Noskaidro, kur šo profesiju var apgūt',
+ 'Noskaidrot, cik ilgi tam jāmācās':'Noskaidro, cik ilgi tam jāmācās'
+};
+function mkIeteikumiB(){
+  const S=R.S,o=[],mr=merkScore(),iz=izpScore();
+  if(mr.done&&mr.arr[0]){
+    o.push(`Tavs ceļš pēc 9. klases pašlaik ir „${mr.arr[0].n}”. Izvēle kļūst droša tikai tad, kad klātienē ir redzētas vismaz divas konkrētas iestādes.`);
+  }
+  if(iz.gaps.length)o.push(`Līdz nākamajai reizei ir vērts ${mLst(mLowAll(mCut(iz.gaps,4)))}.`);
+  const kt=kritTop();
+  if(kt.length)o.push(`Iestādes salīdzini pēc saviem kritērijiem: ${mLst(mLowAll(kt))}. Uzraksti tos vienā tabulā, lai izvēle balstās faktos, nevis sajūtā.`);
+  const kl=kritLow();
+  if(kl.length)o.push(`Pārbaudi arī to, vai kritēriji, kurus tagad uzskati par nesvarīgiem (${mLst(mLowAll(mCut(kl,3)))}), tādi paliks arī pēc gada.`);
+  const nep=MITI.filter(([k,,ats])=>S.miti[k]&&S.miti[k]!==ats);
+  if(nep.length)o.push(`Pievērs uzmanību: ${nep.map(m=>m[3]).slice(0,2).join(' ')}`);
+  if(S.skersli&&S.skersli.length)o.push(`Tu atzīmēji iespējamos šķēršļus: ${mLst(mQ(S.skersli))}. Tāpēc ir vajadzīgs arī otrs plāns — vismaz viena rezerves iestāde vai programma.`);
+  o.push(`Pieraksti uzņemšanas termiņus kalendārā. Daudzās programmās pieteikšanās noslēdzas agrāk, nekā to gaida.`);
+  return o.join('\n');
+}
+function mkUzdevumsB(){
+  const S=R.S,o=[],iz=izpScore();let n=0;
+  iz.gaps.slice(0,2).forEach(g=>o.push(`${++n}. ${MK_UZD[g]||g}.`));
+  o.push(`${++n}. Apskati divu iestāžu mājaslapas un pieraksti uzņemšanas prasības, termiņus un mācību ilgumu.`);
+  o.push(`${++n}. Piesakies atvērto durvju dienai vismaz vienā iestādē.`);
+  if(S.skersli&&S.skersli.length)o.push(`${++n}. Uzraksti, kura būtu Tava rezerves izvēle, ja pirmais plāns neizdotos.`);
+  return o.join('\n');
+}
+
+const MK = {
+  A:{stipras:mkStiprasA,jomas:mkJomasA,ieteikumi:mkIeteikumiA,uzdevums:mkUzdevumsA},
+  B:{stipras:mkStiprasB,jomas:mkJomasB,ieteikumi:mkIeteikumiB,uzdevums:mkUzdevumsB}
+};
+function mkOn(){return !!MK[R.K.prog];}
+function mkApply(kind){
+  const set=MK[R.K.prog];if(!set)return 0;
+  const keys=kind==='viss'?['stipras','jomas','ieteikumi','uzdevums']:[kind];
+  let cnt=0;
+  keys.forEach(k=>{
+    const v=set[k]();
+    if(k==='jomas'){
+      const arr=R.K.jomas;let add=0;
+      (v||[]).forEach(x=>{if(x&&!arr.includes(x)){arr.push(x);add++;}});
+      if(add)cnt++;
+    }else{
+      const txt=String(v||'').trim();if(!txt)return;
+      const cur=String(R.K[k]||'').trim();
+      R.K[k]=cur?cur+'\n\n'+txt:txt;
+      cnt++;
+    }
+  });
+  return cnt;
+}
+function mkBtns(){
+  if(!mkOn())return '';
+  return `<div class="mkbar">
+    <button type="button" class="btn small primary" data-act="mk" data-v="viss">Sagatavot melnrakstu</button>
+    <button type="button" class="btn small" data-act="mk" data-v="stipras">Stiprās puses</button>
+    <button type="button" class="btn small" data-act="mk" data-v="jomas">Jomas</button>
+    <button type="button" class="btn small" data-act="mk" data-v="ieteikumi">Ieteikumi</button>
+    <button type="button" class="btn small" data-act="mk" data-v="uzdevums">Uzdevums</button>
+    <div class="hint" style="width:100%;margin-top:4px">Melnrakstu veido no anketas atbildēm. Tas neizdzēš jau ierakstīto — jaunais teksts pievienojas zemāk. Pārrakstiet to savos vārdos.</div>
+    <div id="mkMsg" class="mkmsg"></div></div>`;
+}
 
 /* ============ Renderēšana ============ */
 function renderRail(){
@@ -1411,6 +1589,11 @@ document.addEventListener('click',e=>{
     case 'soliadd':{const inp=b.parentElement.querySelector('input');const v=inp.value.trim();
       if(v){R.K.soli.push({t:v,on:true});document.querySelector('[data-w="K.soli"]').innerHTML=soliIn();changed('K.');}break;}
     case 'res':{const id=b.dataset.v;const arr=R.K.resursi;const i=arr.indexOf(id);if(b.checked&&i<0)arr.push(id);if(!b.checked&&i>=0)arr.splice(i,1);changed('K.');break;}
+    case 'mk':{const k=b.dataset.v;const n=mkApply(k);render();
+      const el=$('#mkMsg');
+      if(el)el.textContent=n?(k==='viss'?'Melnraksts sagatavots. Pārlasiet un papildiniet to.':'Melnraksts pievienots laukam. Pārlasiet un papildiniet to.')
+                           :'Anketā vēl nav pietiekami daudz atbilžu, lai sagatavotu melnrakstu.';
+      break;}
     case 'pdfS':printDoc('s');break;
     case 'pdfK':printDoc('k');break;
     case 'pdfU':printDoc('u');break;
