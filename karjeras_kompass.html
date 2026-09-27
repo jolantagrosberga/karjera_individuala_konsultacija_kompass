@@ -101,6 +101,10 @@ input:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 
 .blokcard .bn{font-family:var(--head);font-weight:700;color:var(--navy);font-size:15px}
 .blokcard .bd{font-size:13px;line-height:1.4}
 .blokcard .bp{font-size:12px;color:#5A6875;line-height:1.4}
+.blokcard.mirror{cursor:default;gap:4px}
+.blokcard.mirror:hover{border-color:var(--line)}
+.blokcard.mirror.on:hover{border-color:var(--orange)}
+.blokcard.mirror .v{font-size:12px;margin:2px 3px 0 0}
 .blokcard.b1{border-left:6px solid #2E74B5}.blokcard.b2{border-left:6px solid #C75000}
 .blokcard.b3{border-left:6px solid #3F8F4F}.blokcard.b4{border-left:6px solid #7B5EA7}
 .blokcard.b5{border-left:6px solid #B98A20}
@@ -768,7 +772,7 @@ function scaleIn(path){const v=getP(R,path);let h='<div class="scale">';for(let 
 function lightW(key){const path='S.lomas.'+key;WREG[path]={k:'light'};return `<span data-w="${path}">${lightIn(path)}</span>`;}
 function lightIn(path){const v=getP(R,path)||'';return `<span class="light">${[['g','Zaļš: tas ir par mani'],['y','Dzeltens: dažreiz'],['r','Sarkans: nav par mani']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="seg" data-p="${path}" data-v="${c}" title="${l}" aria-label="${l}"></button>`).join('')}</span>`;}
 WREG['S.riasec']={k:'ri'};WREG['S.prasmesT']={k:'sk'};WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};WREG['S.vertT']={k:'vert'};WREG['S.merkT']={k:'merk'};WREG['S.izpT']={k:'izp'};WREG['S.krit']={k:'krit'};WREG['S.miti']={k:'miti'};WREG['S.iestV']={k:'salidz'};
-function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();const e3=$('#vertRes');if(e3)e3.innerHTML=vertResHTML();const e4=$('#merkRec');if(e4)e4.innerHTML=merkRecHTML();const e5=$('#izpRes');if(e5)e5.innerHTML=izpResHTML(ROLE==='skolens');const e6=$('#kritRes');if(e6)e6.innerHTML=kritResHTML();const e7=$('#profRes');if(e7)e7.innerHTML=profResHTML(ROLE==='skolens');const e8=$('#meklRes');if(e8)e8.innerHTML=meklResHTML();}
+function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();const e3=$('#vertRes');if(e3)e3.innerHTML=vertResHTML();const e4=$('#merkRec');if(e4)e4.innerHTML=merkRecHTML();const e5=$('#izpRes');if(e5)e5.innerHTML=izpResHTML(ROLE==='skolens');const e6=$('#kritRes');if(e6)e6.innerHTML=kritResHTML();const e7=$('#profRes');if(e7)e7.innerHTML=profResHTML(ROLE==='skolens');const e8=$('#meklRes');if(e8)e8.innerHTML=meklResHTML();const e9=$('#blokKons');if(e9)e9.innerHTML=blokKons();}
 function subjW(){WREG['S.prieksmeti']={k:'subj'};return `<div data-w="S.prieksmeti">${subjIn()}</div>`;}
 function subjIn(){
   const list=[...PRIEKSMETI,...R.S.prieksmCustom];
@@ -889,6 +893,21 @@ function profLists(){
     const v=(R.S.prof||{})[id+'_'+i];
     if(v==='p')yes.push(pn);else if(v==='x')may.push(pn);}));
   return {yes,may};
+}
+function blokKons(){
+  const sel=R.S.bloki||[];
+  const zime=v=>v==='p'?' ✓':v==='x'?' ?':v==='n'?' ✕':'';
+  return `<div class="card"><h3>Darbu pasaules un profesijas</h3>
+    <p class="hint" style="margin-top:-6px">Tas pats, ko redz skolēns. ✓ interesē, ? varbūt, ✕ neinteresē, ✦ jauna profesija.</p>
+    <div class="blokgrid">${BLOKI.map(([id,n,d,c,prof])=>{
+      const on=sel.includes(id);
+      return `<div class="blokcard mirror ${c}${on?' on':''}">
+        <span class="bn">${esc(n)}${on?' <span class="jauna">izvēlēta</span>':''}</span>
+        <span class="bd">${esc(d)}</span>
+        <span class="bp">${prof.map(([pn,,jauna],i)=>{
+          const v=(R.S.prof||{})[id+'_'+i];
+          return on?`<span class="v ${v==='p'?'g':v==='n'?'r':''}">${esc(pn)}${jauna?' ✦':''}${zime(v)}</span>`
+                   :`${esc(pn)}${jauna?' ✦':''}`;}).join(on?'':' · ')}</span></div>`;}).join('')}</div></div>`;
 }
 function blokNames(){return BLOKI.filter(b=>(R.S.bloki||[]).includes(b[0])).map(b=>b[1]);}
 function profResHTML(forStudent){
@@ -1390,7 +1409,8 @@ function kView(i){
     <button class="btn small" data-act="code">Ielādēt datu kodu</button>
     <button class="btn small" data-act="import">Atvērt saglabāto failu</button></div>`;
   if(id!=='nosl')return tb+`<div class="kgrid">
-    <div class="card ans"><h3>Skolēna atbildes</h3><div id="ans">${dlHTML(id)}</div></div>
+    <div>${id==='profesijas'?`<div id="blokKons" style="margin-bottom:16px">${blokKons()}</div>`:''}
+      <div class="card ans"><h3>Skolēna atbildes</h3><div id="ans">${dlHTML(id)}</div></div></div>
     <div>${id==='sakums'?anketaSecinajums():''}
       ${id==='es'?`<div id="merkRec">${merkRecHTML()}</div><div id="hintBox">${hintsHTML()}</div>`:''}
       ${id==='profesijas'?`<div class="card accent" id="vertRes" style="margin-bottom:16px">${vertResHTML()}</div>
