@@ -237,7 +237,7 @@ main{overflow-y:auto;height:100%;width:100%}
   <div class="intro">
     <h2>Pirms tikšanās ar karjeras konsultanti</h2>
     <ul class="introlist">
-      <li>Aizpildi šo anketu vienā piegājienā, tas aizņems aptuveni 5–8 minūtes.</li>
+      <li>Aizpildi šo anketu vienā piegājienā. Tas aizņems aptuveni 4–6 minūtes.</li>
       <li>Atbildes netiek nekur saglabātas, tāpēc anketu neaizver.</li>
       <li>Pildi datorā, nevis telefonā.</li>
       <li>Beigās saglabāsi PDF sev.</li>
@@ -259,38 +259,38 @@ main{overflow-y:auto;height:100%;width:100%}
 <script>
 const RIASEC = [
  ['R','Remontēt velosipēdu vai ierīci.',1],
- ['R','Strādāt ar instrumentiem darbnīcā.',1],
+ ['R','Strādāt ar instrumentiem darbnīcā.',0],
  ['R','Kopt dārzu vai rūpēties par dzīvniekiem.',0],
  ['R','Salikt vai uzbūvēt kaut ko pēc shēmas.',1],
  ['R','Darboties ārā, nevis pie galda telpā.',0],
  ['I','Noskaidrot, kāpēc kaut kas notiek tieši tā.',1],
- ['I','Risināt sarežģītus uzdevumus.',1],
+ ['I','Risināt sarežģītus uzdevumus.',0],
  ['I','Veikt eksperimentus un mērījumus.',0],
  ['I','Lasīt par zinātnes atklājumiem.',1],
  ['I','Meklēt kļūdu, līdz tā ir atrasta.',0],
  ['A','Zīmēt, fotografēt vai veidot video.',1],
- ['A','Izdomāt kaut ko pilnīgi jaunu.',1],
+ ['A','Izdomāt kaut ko pilnīgi jaunu.',0],
  ['A','Spēlēt mūziku, dziedāt vai dejot.',0],
  ['A','Rakstīt stāstus vai tekstus.',1],
  ['A','Veidot lietu vizuālo izskatu.',0],
  ['S','Palīdzēt jaunākam skolēnam saprast uzdevumu.',1],
- ['S','Uzklausīt, ja kādam ir grūti.',1],
+ ['S','Uzklausīt, ja kādam ir grūti.',0],
  ['S','Strādāt ar cilvēkiem katru dienu.',0],
  ['S','Mācīt citiem to, ko labi protu.',1],
  ['S','Rūpēties par kādu, kam vajadzīga palīdzība.',0],
  ['E','Pārliecināt citus par savu ideju.',1],
- ['E','Vadīt komandu un sadalīt pienākumus.',1],
+ ['E','Vadīt komandu un sadalīt pienākumus.',0],
  ['E','Piedāvāt vai pārdot kaut ko cilvēkiem.',0],
  ['E','Uzņemties atbildību par rezultātu.',1],
  ['E','Sākt savu uzņēmējdarbību.',0],
  ['C','Sakārtot datus tabulā, lai viss ir precīzi.',1],
- ['C','Strādāt pēc skaidriem noteikumiem.',1],
+ ['C','Strādāt pēc skaidriem noteikumiem.',0],
  ['C','Sekot līdzi naudai un rēķiniem.',0],
  ['C','Pierakstīt un kārtot informāciju.',1],
  ['C','Pabeigt darbu līdz pēdējai detaļai.',0]
 ];
 const TIPI = {
- R:{n:'Praktiskais',d:'Tev patīk strādāt ar rokām, tehniku un materiāliem, lai taptu konkrēts rezultāts.',p:['inženieris','autoatslēdznieks','celtnieks','elektriķis','lauksaimnieks','sporta treneris']},
+ R:{n:'Praktiskais',d:'Tev patīk darbs ar rokām, tehniku un materiāliem, kur rezultāts ir redzams un taustāms.',p:['inženieris','autoatslēdznieks','celtnieks','elektriķis','lauksaimnieks','sporta treneris']},
  I:{n:'Pētnieks',d:'Tev patīk saprast cēloņus, analizēt un meklēt risinājumus.',p:['ārsts','laborants','programmētājs','vides speciālists','datu analītiķis','veterinārārsts']},
  A:{n:'Radošais',d:'Tev patīk izdomāt ko jaunu, izpausties un veidot vizuālu vai skanošu rezultātu.',p:['dizainers','arhitekts','fotogrāfs','mūziķis','žurnālists','video montāžas speciālists']},
  S:{n:'Sociālais',d:'Tev patīk strādāt ar cilvēkiem, palīdzēt, mācīt un uzklausīt.',p:['skolotājs','psihologs','māsa','sociālais darbinieks','fizioterapeits','pasākumu vadītājs']},
@@ -312,7 +312,7 @@ const IEPAZ = [
 ];
 const STILS = [
  ['ritms','Vislabāk strādāju no rīta','Vislabāk strādāju vakarā'],
- ['soc','Labāk daru visu viens','Labāk daru kopā ar citiem'],
+ ['soc','Labāk strādāju vienatnē','Labāk strādāju kopā ar citiem'],
  ['troksnis','Man vajag klusumu','Man patīk kustība un skaņas apkārt'],
  ['vide','Labāk telpā pie galda','Labāk ārā un kustībā'],
  ['rutina','Patīk kārtība un rutīna','Patīk pārmaiņas un negaidīti uzdevumi'],
@@ -385,7 +385,6 @@ function testResHTML(){
     ${top.map(x=>`<div class="tipcard"><h4>${x.n} (${x.pct}%)</h4><div>${esc(TIPI[x.c].d)}</div>
       <div class="hint">Profesiju piemēri: ${TIPI[x.c].p.join(', ')}. <a href="https://www.profesijupasaule.lv/" target="_blank" rel="noopener">Profesiju pasaule</a></div></div>`).join('')}
     <div style="margin-top:8px">${arr.map(x=>`<div style="margin-bottom:6px"><span style="font-size:14px">${x.n} ${x.pct}%</span><span class="bar"><span style="width:${x.pct}%"></span></span></div>`).join('')}</div>
-    ${mine.length?`<div class="hint" style="margin-top:8px">Tavas trīs iespējamās profesijas: ${esc(mine.join(', '))}. Vai tas sakrīt ar rezultātu?</div>`:''}
     <p class="hint">Tas nav spriedums par Tevi. Tas ir tikai sarunas sākums, un pareizu atbilžu šeit nav.</p>`;
 }
 function stilsIn(){
@@ -451,7 +450,7 @@ function scaleW(path,lo,hi){WREG[path]={k:'scale',lo,hi};return `<div data-w="${
 var chipsIn,tagsIn,lightIn,subjIn; // netiek lietoti šajā failā
 const STEPS=[{id:'sakums',t:'Par mani'},{id:'tests',t:'Interešu tests'},{id:'stils',t:'Darba stils un ritms'},{id:'beigas',t:'Nosūtīšana'}];
 function newS(){return{name:'',klase:'',datums:today(),skalaSak:0,iep1:'',iep2:'',iep3:'',iep4:'',iep5:'',gaidas:'',
- testLen:'pilns',riasec:{},prasmesT:{},stils:{},macStils:{},top3:[]};}
+ testLen:'iss',riasec:{},prasmesT:{},stils:{},macStils:{},top3:[]};}
 const R={S:newS()};
 const WREG={};
 WREG['S.riasec']={k:'ri'};WREG['S.prasmesT']={k:'sk'};WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};
@@ -475,11 +474,11 @@ const VIEW={
  tests:()=>`
   <p class="lead">Atzīmē, cik ļoti Tev patiktu katru no šīm lietām darīt. Domā ātri, pirmā doma parasti ir precīzākā.</p>
   <div class="card" style="margin-bottom:16px"><h3>Testa apjoms</h3>
-    <p class="hint" style="margin-top:-4px">Pilnajā testā ir 30 apgalvojumi par interesēm un 12 par prasmēm, īsajā — 18 un 8.</p>
+    <p class="hint" style="margin-top:-4px">Īsajā testā ir 12 apgalvojumi par interesēm un 8 par prasmēm, pilnajā — 30 un 12.</p>
     ${segW('S.testLen',[['pilns','Pilnais'],['iss','Īsais']])}</div>
   <div class="kgrid">
     <div>
-      <div class="card"><h3>Kas Tev patiktu darīt?</h3><div data-w="S.riasec">${riIn()}</div></div>
+      <div class="card"><h3>Ko Tev patiktu darīt?</h3><div data-w="S.riasec">${riIn()}</div></div>
       <div class="card" style="margin-top:20px"><h3>Kā Tev šķiet, kas Tev padodas?</h3><div data-w="S.prasmesT">${skIn()}</div></div>
     </div>
     <div class="card accent" id="testRes">${testResHTML()}</div>
@@ -527,7 +526,7 @@ document.addEventListener('click',async e=>{
     case 'next':go(STEP+1);break;
     case 'prev':go(STEP-1);break;
     case 'scale':{const v=+b.dataset.v;setP(R,p,getP(R,p)===v?0:v);rerender(p);break;}
-    case 'seg':{const cur=String(getP(R,p)??'');setP(R,p,cur===b.dataset.v?'':b.dataset.v);rerender(p);if(p==='S.testLen'){if(!getP(R,p))setP(R,p,'pilns');render();}break;}
+    case 'seg':{const cur=String(getP(R,p)??'');setP(R,p,cur===b.dataset.v?'':b.dataset.v);rerender(p);if(p==='S.testLen'){if(!getP(R,p))setP(R,p,'iss');render();}break;}
     case 'ri':{const k=b.dataset.k;R.S.riasec[k]=R.S.riasec[k]===b.dataset.v?'':b.dataset.v;rerender('S.riasec');updTest();break;}
     case 'sk':{const s=b.dataset.s;R.S.prasmesT[s]=R.S.prasmesT[s]===b.dataset.v?'':b.dataset.v;rerender('S.prasmesT');updTest();break;}
     case 'st':{const k=b.dataset.k;R.S.stils[k]=R.S.stils[k]===b.dataset.v?'':b.dataset.v;rerender('S.stils');updTest();break;}
