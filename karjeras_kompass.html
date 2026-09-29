@@ -136,6 +136,9 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
 .mktext.empty{color:#7A8794;font-style:italic}
 .mkmsg{font-size:13.5px;color:var(--orange);font-weight:600}
 .mkmsg:empty{display:none}
+.kmirror{border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 16px 16px;margin-bottom:16px}
+.kmirhead{margin:0 -16px 14px;padding:8px 16px;background:var(--navy);color:#fff;font-size:13px;border-radius:9px 9px 0 0}
+.kmirror .lead{margin-top:14px}
 .anksec{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;padding:12px 14px;margin-bottom:16px}
 .anksec h3{margin:0 0 6px}
 .anksec ol{margin:0;padding-left:20px}
@@ -772,7 +775,7 @@ function scaleIn(path){const v=getP(R,path);let h='<div class="scale">';for(let 
 function lightW(key){const path='S.lomas.'+key;WREG[path]={k:'light'};return `<span data-w="${path}">${lightIn(path)}</span>`;}
 function lightIn(path){const v=getP(R,path)||'';return `<span class="light">${[['g','Zaļš: tas ir par mani'],['y','Dzeltens: dažreiz'],['r','Sarkans: nav par mani']].map(([c,l])=>`<button type="button" class="${c}${v===c?' on':''}" data-act="seg" data-p="${path}" data-v="${c}" title="${l}" aria-label="${l}"></button>`).join('')}</span>`;}
 WREG['S.riasec']={k:'ri'};WREG['S.prasmesT']={k:'sk'};WREG['S.stils']={k:'stils'};WREG['S.macStils']={k:'mac'};WREG['S.vertT']={k:'vert'};WREG['S.merkT']={k:'merk'};WREG['S.izpT']={k:'izp'};WREG['S.krit']={k:'krit'};WREG['S.miti']={k:'miti'};WREG['S.iestV']={k:'salidz'};
-function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();const e3=$('#vertRes');if(e3)e3.innerHTML=vertResHTML();const e4=$('#merkRec');if(e4)e4.innerHTML=merkRecHTML();const e5=$('#izpRes');if(e5)e5.innerHTML=izpResHTML(ROLE==='skolens');const e6=$('#kritRes');if(e6)e6.innerHTML=kritResHTML();const e7=$('#profRes');if(e7)e7.innerHTML=profResHTML(ROLE==='skolens');const e8=$('#meklRes');if(e8)e8.innerHTML=meklResHTML();const e9=$('#blokKons');if(e9)e9.innerHTML=blokKons();}
+function updTest(){const el=$('#testRes');if(el)el.innerHTML=testResHTML();const e2=$('#stilsRes');if(e2)e2.innerHTML=stilsResHTML();const e3=$('#vertRes');if(e3)e3.innerHTML=vertResHTML();const e4=$('#merkRec');if(e4)e4.innerHTML=merkRecHTML();const e5=$('#izpRes');if(e5)e5.innerHTML=izpResHTML(ROLE==='skolens');const e6=$('#kritRes');if(e6)e6.innerHTML=kritResHTML();const e7=$('#profRes');if(e7)e7.innerHTML=profResHTML(ROLE==='skolens');const e8=$('#meklRes');if(e8)e8.innerHTML=meklResHTML();}
 function subjW(){WREG['S.prieksmeti']={k:'subj'};return `<div data-w="S.prieksmeti">${subjIn()}</div>`;}
 function subjIn(){
   const list=[...PRIEKSMETI,...R.S.prieksmCustom];
@@ -1408,15 +1411,16 @@ function kView(i){
       </select></span>
     <button class="btn small" data-act="code">Ielādēt datu kodu</button>
     <button class="btn small" data-act="import">Atvērt saglabāto failu</button></div>`;
-  if(id!=='nosl')return tb+`<div class="kgrid">
-    <div>${id==='profesijas'?`<div id="blokKons" style="margin-bottom:16px">${blokKons()}</div>`:''}
-      <div class="card ans"><h3>Skolēna atbildes</h3><div id="ans">${dlHTML(id)}</div></div></div>
+  if(id!=='nosl')return tb+`
+    <div class="kmirror">
+      <div class="kmirhead">Skolēna ekrāns — tas pats, ko redz skolēns. Ja šeit klikšķini vai raksti, mainās arī skolēna atbildes.</div>
+      <div id="kmir">${SVIEW[id]()}</div>
+    </div>
+    <div style="margin-bottom:16px">${extras('Skolēna atbilžu kopsavilkums',`<div id="ans">${dlHTML(id)}</div>`)}</div>
+    <div class="kgrid" style="grid-template-columns:1fr 1fr">
     <div>${id==='sakums'?anketaSecinajums():''}
       ${id==='es'?`<div id="merkRec">${merkRecHTML()}</div><div id="hintBox">${hintsHTML()}</div>`:''}
-      ${id==='profesijas'?`<div class="card accent" id="vertRes" style="margin-bottom:16px">${vertResHTML()}</div>
-        <div class="card accent" id="profRes" style="margin-bottom:16px">${profResHTML(false)}</div>`:''}
-      ${id==='skola'?`<div class="card accent" id="kritRes" style="margin-bottom:16px">${kritResHTML()}</div>
-        <div class="card accent" id="meklRes" style="margin-bottom:16px">${meklResHTML()}</div>`:''}
+
       ${id==='salidz'?`<div class="card accent" style="margin-bottom:16px">${meklResHTML()}
         ${kritTop().length?`<div style="margin-top:10px"><b>Ļoti svarīgi:</b> ${kritTop().map(x=>`<span class="v g">${esc(x)}</span>`).join('')}</div>`:''}
         ${celiNames().length?`<div style="margin-top:8px"><b>Izvēlētais ceļš:</b> ${celiNames().map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}
@@ -1428,7 +1432,8 @@ function kView(i){
           <input type="checkbox" id="iestCb" ${R.K.iestOn?'checked':''} style="width:18px;height:18px;accent-color:var(--orange)">
           Rādīt skolēnam</label>
         ${iestIn()}</div>`:''}
-      <div class="card">${fld('Manas piezīmes','P.notes.'+id,{area:1,rows:10,hint:'Šīs piezīmes skolēns neredz. Tās tiek iekļautas konsultanta PDF.'})}</div></div></div>`;
+      </div>
+    <div><div class="card">${fld('Manas piezīmes','P.notes.'+id,{area:1,rows:12,hint:'Šīs piezīmes skolēns neredz. Tās tiek iekļautas konsultanta PDF.'})}</div></div></div>`;
   return tb+`<div class="kgrid" style="grid-template-columns:1fr 1fr">
     <div>
       <div id="hintBox">${hintsHTML()}</div>
@@ -1721,10 +1726,15 @@ function changed(path){
   if(ROLE==='konsultants'&&path.startsWith('K.iest'))queue('i');
   if(ROLE==='skolens'&&path.startsWith('S.'))queue('s');
 
-  if(ROLE==='konsultants'&&path.startsWith('S.'))send({t:'sf',f:path,v:getP(R,path)});
+  if(ROLE==='konsultants'&&path.startsWith('S.')){
+    // „S." ir vispārīga zīme testiem un šķautnēm — tad sūta visu skolēna stāvokli
+    const k=path.split('.');
+    if(k.length<2||k[1]==='')queue('r');
+    else send({t:'sf',f:path,v:getP(R,path)});
+  }
 }
 function queue(kind){clearTimeout(sendT[kind]);sendT[kind]=setTimeout(()=>send(
-  kind==='s'?{t:'s',s:R.S}:kind==='i'?{t:'iest',v:{on:R.K.iestOn,iest:R.K.iest}}:{t:'k',k:R.K}),250);}
+  kind==='s'?{t:'s',s:R.S}:kind==='r'?{t:'restore',s:R.S}:kind==='i'?{t:'iest',v:{on:R.K.iestOn,iest:R.K.iest}}:{t:'k',k:R.K}),250);}
 
 document.addEventListener('input',e=>{
   const f=e.target.closest('[data-f]');if(!f)return;
@@ -1905,7 +1915,10 @@ function onData(m){
     else if(m.t==='sum'){R.K.sum=m.v;render();}
     else if(m.t==='iest'){R.K.iestOn=m.v.on;R.K.iest=m.v.iest;if(STEPS[STEP].id==='salidz')render();}
     else if(m.t==='restore'){R.S=m.s;render();}
-    else if(m.t==='sf'){setP(R,m.f,m.v);if(STEPS[STEP].id==='sakums')render();}
+    else if(m.t==='sf'){setP(R,m.f,m.v);
+      // nepārzīmē, kamēr skolēns raksta laukā
+      const ae=document.activeElement;
+      if(!ae||!/^(INPUT|TEXTAREA)$/.test(ae.tagName))render();}
   }
 }
 function setStudentStep(n){
