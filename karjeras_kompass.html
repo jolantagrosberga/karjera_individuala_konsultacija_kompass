@@ -138,6 +138,9 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
 .mkmsg:empty{display:none}
 .kmirror{border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 16px 16px;margin-bottom:16px}
 .kmirhead{margin:0 -16px 14px;padding:8px 16px;background:var(--navy);color:#fff;font-size:13px;border-radius:9px 9px 0 0}
+.kmirhead.flash{animation:flh 1.2s ease-out}
+@keyframes flh{0%{background:var(--orange)}100%{background:var(--navy)}}
+@media (prefers-reduced-motion:reduce){.kmirhead.flash{animation:none}}
 .kmirror .lead{margin-top:14px}
 .anksec{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;padding:12px 14px;margin-bottom:16px}
 .anksec h3{margin:0 0 6px}
@@ -1413,12 +1416,12 @@ function kView(i){
     <button class="btn small" data-act="import">Atvērt saglabāto failu</button></div>`;
   if(id!=='nosl')return tb+`
     <div class="kmirror">
-      <div class="kmirhead">Skolēna ekrāns — tas pats, ko redz skolēns. Ja šeit klikšķini vai raksti, mainās arī skolēna atbildes.</div>
+      <div class="kmirhead" id="kmirhead">Skolēna ekrāns — tas pats, ko redz skolēns. Ja šeit klikšķini vai raksti, mainās arī skolēna atbildes.</div>
       <div id="kmir">${SVIEW[id]()}</div>
     </div>
     <div style="margin-bottom:16px">${extras('Skolēna atbilžu kopsavilkums',`<div id="ans">${dlHTML(id)}</div>`)}</div>
     <div class="kgrid" style="grid-template-columns:1fr 1fr">
-    <div>${id==='sakums'?anketaSecinajums():''}
+    <div>${id==='sakums'?`<div id="anksecBox">${anketaSecinajums()}</div>`:''}
       ${id==='es'?`<div id="merkRec">${merkRecHTML()}</div><div id="hintBox">${hintsHTML()}</div>`:''}
 
       ${id==='salidz'?`<div class="card accent" style="margin-bottom:16px">${meklResHTML()}
@@ -1716,8 +1719,22 @@ function goStep(i){
 }
 function refreshAns(){
   if(ROLE!=='konsultants')return;
-  const a=$('#ans');if(a){a.innerHTML=dlHTML(STEPS[STEP].id);a.classList.remove('flash');void a.offsetWidth;a.classList.add('flash');}
+  const id=STEPS[STEP].id;
+  // Skolēna ekrāna spogulis — nepārzīmē, kamēr konsultants pats raksta tajā
+  const mir=$('#kmir');
+  if(mir&&SVIEW[id]){
+    const ae=document.activeElement;
+    if(!(ae&&mir.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))){
+      mir.innerHTML=SVIEW[id]();
+      const hd=$('#kmirhead');
+      if(hd){hd.classList.remove('flash');void hd.offsetWidth;hd.classList.add('flash');}
+    }
+  }
+  const a=$('#ans');if(a){a.innerHTML=dlHTML(id);a.classList.remove('flash');void a.offsetWidth;a.classList.add('flash');}
   const hb=$('#hintBox');if(hb)hb.innerHTML=hintsHTML();
+  const mr=$('#merkRec');if(mr)mr.innerHTML=merkRecHTML();
+  const ab=$('#anksecBox');if(ab)ab.innerHTML=anketaSecinajums();
+  updTest();
 }
 
 /* ============ Notikumi ============ */
