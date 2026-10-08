@@ -237,7 +237,7 @@ main{overflow-y:auto;height:100%;width:100%}
   <div class="intro">
     <h2>Pirms tikšanās ar karjeras konsultanti</h2>
     <ul class="introlist">
-      <li>Aizpildi šo anketu vienā piegājienā. Tas aizņems aptuveni 4–6 minūtes.</li>
+      <li>Aizpildi šo anketu vienā reizē. Tas aizņems aptuveni 4–6 minūtes.</li>
       <li>Atbildes netiek nekur saglabātas, tāpēc anketu neaizver.</li>
       <li>Pildi datorā, nevis telefonā.</li>
       <li>Beigās saglabāsi PDF sev.</li>
@@ -304,7 +304,7 @@ const PRASMJU_TESTS = [
  ['Ievērot precizitāti un kārtību',0],['Vadīt un organizēt citus',0]
 ];
 const IEPAZ = [
- ['iep1','Kuras mācības skolā Tev sanāk vislabāk un kāpēc?'],
+ ['iep1','Kuri mācību priekšmeti Tev skolā padodas vislabāk un kāpēc?'],
  ['iep2','Kas Tevi visvairāk nogurdina — gan skolā, gan ārpus tās?'],
  ['iep3','Ar ko Tu aizraujies brīvajā laikā?'],
  ['iep4','Ko Tu darītu, ja rīt būtu pilnīgi brīva diena?'],
@@ -472,12 +472,12 @@ const VIEW={
       ${IEPAZ.map(([k,q])=>fld(q,'S.'+k,{area:1,rows:2})).join('')}</div>
   </div>`,
  tests:()=>`
-  <p class="lead">Atzīmē, cik ļoti Tev patiktu katru no šīm lietām darīt. Domā ātri, pirmā doma parasti ir precīzākā.</p>
-  <p class="hint" style="margin-top:-8px;margin-bottom:16px">Divdesmit apgalvojumi: 12 par interesēm un 8 par prasmēm.</p>
+  <p class="lead">Atzīmē, cik ļoti Tev patiktu darīt katru no šīm lietām. Domā ātri, pirmā doma parasti ir precīzākā.</p>
+  <p class="hint" style="margin-top:-8px;margin-bottom:16px">20 apgalvojumi: 12 par interesēm un 8 par prasmēm.</p>
   <div class="kgrid">
     <div>
       <div class="card"><h3>Ko Tev patiktu darīt?</h3><div data-w="S.riasec">${riIn()}</div></div>
-      <div class="card" style="margin-top:20px"><h3>Kā Tev šķiet, kas Tev padodas?</h3><div data-w="S.prasmesT">${skIn()}</div></div>
+      <div class="card" style="margin-top:20px"><h3>Kā Tev šķiet, kas padodas vislabāk?</h3><div data-w="S.prasmesT">${skIn()}</div></div>
     </div>
     <div class="card accent" id="testRes">${testResHTML()}</div>
   </div>`,
