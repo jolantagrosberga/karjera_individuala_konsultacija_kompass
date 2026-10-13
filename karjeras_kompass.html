@@ -1784,7 +1784,7 @@ function kView(i){
     <div><div class="card">${fld('Manas piezīmes','P.notes.'+id,{area:1,rows:12,hint:'Šīs piezīmes skolēns neredz. Tās tiek iekļautas konsultanta PDF.'})}</div></div></div>
     ${id==='salidz'?`<div class="card" style="margin-top:16px">
       <h3>Ieteiktās mācību iestādes</h3>
-      <p class="hint" style="margin-top:-6px">Aizpildi iepriekš. Skolēns tās redz tikai tad, kad atzīmēta rūtiņa „Rādīt skolēnam”. Tās nonāk arī skolēna PDF un salīdzinājuma lapā.</p>
+      <p class="hint" style="margin-top:-6px">Aizpildi iepriekš. Rūtiņa nosaka tikai to, vai skolēns iestādes redz savā ekrānā konsultācijas laikā. Skolēna PDF tās nonāk vienmēr.</p>
       <label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--navy);margin:8px 0">
         <input type="checkbox" id="iestCb" ${R.K.iestOn?'checked':''} style="width:18px;height:18px;accent-color:var(--orange)">
         Rādīt skolēnam</label>
@@ -2594,8 +2594,8 @@ function printDoc(kind){
         ${dl([['Izglītības ceļš',V(celiNames())],['Ļoti svarīgi',V(kritTop())],['Vidēji svarīgi',V(kritMid())]])}
         ${meklRows().length?`<dl>${meklRows().map(([q,a])=>`<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('')}</dl>`:''}
         ${dl([['Kas mani uztrauc',V(S.skersli)],['Iestādes, par kurām gribu uzzināt vairāk',V(S.iestJaut)]])}</div>`:''}
-      ${(K.iestOn&&salidzTable(false))?`<div class="p-sec"><h2>Ieteicamās mācību iestādes</h2>${salidzTable(false)}</div>`:''}
-      ${(K.iestOn&&celsKarte())?`<div class="p-sec">${celsKarte()}</div>`:''}
+      ${salidzTable(false)?`<div class="p-sec"><h2>Ieteicamās mācību iestādes</h2>${salidzTable(false)}</div>`:''}
+      ${celsKarte()?`<div class="p-sec">${celsKarte()}</div>`:''}
       ${recoForPdf().length?`<div class="p-sec"><h2>Konsultanta ieteikumi</h2><div class="p-box">${dl(recoForPdf())}</div></div>`:''}
       ${majasBloks(false)?`<div class="p-sec"><h2>Manas atbildes pēc konsultācijas</h2>${majasBloks(false)}</div>`:''}
       <div class="p-cols">
