@@ -1274,7 +1274,7 @@ function osmKarte(){
     if(ty<0||ty>=maxT)continue;
     const wx=((tx%maxT)+maxT)%maxT;
     flizes+=`<img class="osm-fl" src="https://tile.openstreetmap.org/${z}/${wx}/${ty}.png" alt=""
-      loading="lazy" onerror="this.style.display='none'"
+      onerror="this.style.display='none'"
       style="left:${Math.round(tx*OSM_TILE-left)}px;top:${Math.round(ty*OSM_TILE-top)}px">`;
   }
   const pins=ok.map((x,k)=>`<span class="osm-pin g${x.i+1}" style="left:${Math.round(lonPx(x.g.lon,z)-left)}px;top:${Math.round(latPx(x.g.lat,z)-top)}px" title="${esc(x.n)}">${x.i+1}</span>`).join('');
@@ -1798,7 +1798,6 @@ function kView(i){
         ${fld('Secinājumi','P.secinajumi',{area:1,rows:5,hint:'Skolēns to neredz. Tas tiek iekļauts konsultanta PDF.'})}
         ${fld('Nākamā tikšanās','K.nakama',{ph:'Piemēram, 12. novembrī'})}</div>
       <div class="actions">
-        ${R.K.prog==='B'?'<button class="btn primary" data-act="pdfC">Salīdzinājuma lapa</button>':''}
         <button class="btn primary" data-act="pdfS">Skolēna PDF</button>
         <button class="btn" data-act="pdfK">Konsultanta PDF</button>
         <button class="btn" data-act="save">Saglabāt darba failu</button>
@@ -2279,7 +2278,6 @@ document.addEventListener('click',e=>{
       break;}
     case 'pdfS':printDoc('s');break;
     case 'pdfK':printDoc('k');break;
-    case 'pdfC':printDoc('c');break;
     case 'export':exportFile();break;
     case 'save':exportFile(true);break;
     case 'code':{const v=prompt('Ielīmē skolēna datu kodu (sākas ar KK):');if(v&&v.trim())loadCode(v.trim()).then(ok=>{if(ok)send({t:'restore',s:R.S});});break;}
@@ -2604,22 +2602,8 @@ function printDoc(kind){
         ${soli.length?`<div class="p-sec"><h2>Mani nākamie soļi</h2>${soli.map(s=>`<div style="padding:2px 0"><span class="cb"></span>${esc(s.t)}</div>`).join('')}</div>`:''}
         ${res.length||linkList2().length?`<div class="p-sec p-link"><h2>Noderīgas saites</h2><ul>${[...linkList2(),...res].map(r=>`<li>${r.u?`<a href="${esc(r.u)}">${esc(r.n)}</a><br><span style="font-size:9pt">${esc(r.u)}</span>`:esc(r.n)}</li>`).join('')}</ul></div>`:''}
       </div>
-      <div class="p-sec"><h2>Cik skaidri redzu savu nākotni</h2>Konsultācijas sākumā: <b>${S.skalaSak||'—'} / 10</b>.${S.skalaBeig?` Pēc konsultācijas: <b>${S.skalaBeig} / 10</b>.`:''}${K.nakama?` Nākamā tikšanās: <b>${esc(K.nakama)}</b>.`:''}</div>
       <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
-  }else if(kind==='c'){
-    const cols=salidzCols();
-    h=`<div class="p-head"><h1>Mācību iestāžu salīdzinājums</h1><div>${who}</div></div>
-      ${kritTop().length?`<div class="p-sec"><h2>Man svarīgi</h2>${kritTop().map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}
-      ${cols.length?salidzTable(false):'<p>Iestādes vēl nav sagatavotas.</p>'}
-      ${celsKarte()?`<div class="p-sec">${celsKarte()}</div>`:''}
-      ${(has(S.iz1)||has(S.iz2)||has(S.iz3))?`<div class="p-sec"><h2>Mana secība</h2><ol>${[S.iz1,S.iz2,S.iz3].filter(has).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${S.izB?`<div>Rezerves variants: ${esc(S.izB)}</div>`:''}</div>`:''}
-      ${(S.darbi&&S.darbi.length)||has(S.izD)?`<div class="p-sec"><h2>Kas man jāizdara un līdz kad</h2><div class="p-box">
-        ${(S.darbi||[]).map(x=>`<div style="padding:2px 0"><span class="cb"></span>${esc(x)}</div>`).join('')}
-        ${has(S.izD)?`<div style="margin-top:6px">${nl(S.izD)}</div>`:''}</div></div>`:''}
-      ${(S.sb4L&&S.sb4L.length)?`<div class="p-sec"><h2>Ko pajautāt atvērto durvju dienā</h2><div class="p-box">
-        ${S.sb4L.map(x=>`<div style="padding:2px 0">• ${esc(x)}</div>`).join('')}</div></div>`:''}
-      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
-  }else{
+    }else{
     h=`<div class="p-head"><h1>Individuālā karjeras konsultācija</h1><div>${who}</div><div>Programma: ${esc(PROG[K.prog].n)}</div></div>`+
       STEPS.slice(0,STEPS.length-1).map(s=>{const n=R.P.notes[s.id];return `<div class="p-sec"><h2>${esc(s.t)}</h2>${dlHTML(s.id)}${has(n)?`<div class="p-notes"><b>Piezīmes:</b> ${nl(n)}</div>`:''}</div>`;}).join('')+
       (majasBloks(false)?`<div class="p-sec"><h2>Skolēna atbildes pēc konsultācijas</h2>${majasBloks(false)}</div>`:'')+
@@ -2628,18 +2612,20 @@ function printDoc(kind){
   }
   $('#print').innerHTML=h;
   const old=document.title;
-  document.title=(kind==='s'?'Skolena_PDF_':kind==='c'?'Salidzinajuma_lapa_':'Konsultanta_PDF_')+fileBase()+'_'+(S.datums||today())+(S.nr?('_Nr'+S.nr):'');
-  $('#pageStyle').textContent=(kind==='c')?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4 portrait;margin:13mm 14mm}';
+  document.title=(kind==='s'?'Skolena_PDF_':'Konsultanta_PDF_')+fileBase()+'_'+(S.datums||today())+(S.nr?('_Nr'+S.nr):'');
+  $('#pageStyle').textContent='@page{size:A4 portrait;margin:13mm 14mm}';
   PRINTING=false;
-  // Dodam kartes flīzēm laiku ielādēties, lai tās nonāk arī izdrukā
-  const img=[...$('#print').querySelectorAll('.osm-fl')];
-  const gatavs=()=>{window.print();document.title=old;};
-  if(!img.length)setTimeout(gatavs,50);
-  else{
-    let n=img.length;const soli=()=>{if(--n<=0)gatavs();};
-    img.forEach(x=>{if(x.complete)soli();else{x.addEventListener('load',soli,{once:true});x.addEventListener('error',soli,{once:true});}});
-    setTimeout(()=>{if(n>0){n=0;gatavs();}},2500);
-  }
+  const pr=$('#print');
+  const img=[...pr.querySelectorAll('.osm-fl')];
+  const gatavs=()=>{pr.style.cssText='';window.print();document.title=old;};
+  if(!img.length){setTimeout(gatavs,50);return;}
+  // Kamēr flīzes ielādējas, drukas slānis jātur redzams, tikai ārpus ekrāna
+  pr.style.cssText='display:block;position:fixed;left:-20000px;top:0;width:800px';
+  let left=img.length;
+  const soli=()=>{if(--left<=0)gatavs();};
+  img.forEach(x=>{if(x.complete&&x.naturalWidth)soli();
+    else{x.addEventListener('load',soli,{once:true});x.addEventListener('error',soli,{once:true});}});
+  setTimeout(()=>{if(left>0){left=0;gatavs();}},4000);
 }
 
 /* ============ Brīdinājums pirms aizvēršanas ============ */
