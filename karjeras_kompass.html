@@ -1211,8 +1211,9 @@ function iestIn(){
       ${IEST_LAUKI.map(([f,l])=>`<div class="${f==='n'?'span2 iestnos':((f==='bonusi'||f==='persp')?'span2':'')}">${fld(l,'K.iest.'+i+'.'+f,{area:1,rows:platie[f]||2})}</div>`).join('')}
       ${i<3?`<div class="span2">${fld('Atrašanās vieta kartē','K.iest.'+i+'.geo',{ph:'Ielīmē Google Maps saiti vai koordinātas, piemēram: 56.9496, 24.1052',
         hint:'Atver vietu Google kartēs un nokopē saiti no adreses joslas. Saīsinātā maps.app.goo.gl saite neder.'})}</div>`:''}
-    </div></div>`).join('')+
-    `<button type="button" class="btn" data-act="iestadd">Pievienot iestādi</button>
+    </div></div>${i===2?`<div id="osmBox">${osmKarte()}</div>`:''}`).join('')+
+    `${n<3?`<div id="osmBox">${osmKarte()}</div>`:''}
+     <button type="button" class="btn" data-act="iestadd">Pievienot iestādi</button>
      <p class="hint">Pirmās trīs ir galvenās — tās, kas skolēnam der vislabāk. Pārējās ir rezerves varianti. Secību maini ar bultiņām.</p>`;
 }
 function tuksaIest(){const o=Object.fromEntries(IEST_LAUKI.map(([f])=>[f,'']));o.geo='';return o;}
@@ -1787,8 +1788,7 @@ function kView(i){
       <label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--navy);margin:8px 0">
         <input type="checkbox" id="iestCb" ${R.K.iestOn?'checked':''} style="width:18px;height:18px;accent-color:var(--orange)">
         Rādīt skolēnam</label>
-      <div id="iestBox">${iestIn()}</div>
-      <div id="osmBox">${osmKarte()}</div></div>`:''}`;
+      <div id="iestBox">${iestIn()}</div></div>`:''}`;
   return tb+`<div class="kgrid" style="grid-template-columns:1fr 1fr">
     <div>
       <div id="hintBox">${hintsHTML()}</div>
@@ -2146,7 +2146,7 @@ function queue(kind){clearTimeout(sendT[kind]);sendT[kind]=setTimeout(()=>send(
 
 let osmT=null;
 function osmRefresh(){clearTimeout(osmT);osmT=setTimeout(()=>{
-  const b=$('#osmBox');if(b)b.innerHTML=osmKarte();
+  const b=$('#osmBox');if(b)b.outerHTML=`<div id="osmBox">${osmKarte()}</div>`;
   const m=$('#kmir');if(m&&ROLE==='konsultants'&&STEPS[STEP].id==='salidz'&&SVIEW.salidz)m.innerHTML=SVIEW.salidz();
 },700);}
 document.addEventListener('input',e=>{
@@ -2235,7 +2235,7 @@ document.addEventListener('click',e=>{
       if(v===0)R.K.osmZ=null;
       else{const cur=R.K.osmZ||osmZoom(salidzCols().filter(o=>o.i<3).map(o=>parseGeo(o.x.geo)).filter(g=>g&&g.lat!==undefined));
         R.K.osmZ=Math.max(3,Math.min(18,cur+v));}
-      const bx=$('#osmBox');if(bx)bx.innerHTML=osmKarte();
+      const bx=$('#osmBox');if(bx)bx.outerHTML=`<div id="osmBox">${osmKarte()}</div>`;
       queue('k');break;}
     case 'iestadd':{R.K.iest.push(tuksaIest());const bx=$('#iestBox');if(bx)bx.innerHTML=iestIn();osmRefresh();queue('i');break;}
     case 'iestup':
