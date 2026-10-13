@@ -167,6 +167,7 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
 .osm-nr.g2{background:#5E9469}
 .osm-nr.g3{background:#C79A2E}
 .osm-brid{color:#6B7684}
+@media print{.osm-brid{display:none}}
 .osm-vad{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
 .osm-lim{font-size:12.5px;font-weight:600;color:var(--navy)}
 @media print{.osm-vad{display:none}}
@@ -2574,13 +2575,15 @@ function printDoc(kind){
   const S=R.S,K=R.K;
   PRINTING=true;
   const who=[S.name,S.klase?S.klase+' klase':'',[fmtDate(S.datums),S.laiks?'plkst. '+S.laiks:''].filter(Boolean).join(' '),S.nr?S.nr+'. konsultācija':''].filter(Boolean).map(esc).join(', ');
+  // Skolēna lapā datumu un laiku nerādām — tie vajadzīgi tikai konsultanta uzskaitei
+  const whoS=[S.name,S.klase?S.klase+' klase':'',S.nr?S.nr+'. konsultācija':''].filter(Boolean).map(esc).join(', ');
   const kons=[K.konsultants,K.amats,K.skola].filter(Boolean).map(esc).join(', ');
   let h='';
   if(kind==='s'){
     const l=profLists();const soli=K.soli.filter(s=>s.on);const res=resList();
     const dl=a=>'<dl>'+a.filter(([,v])=>v).map(([l,v])=>`<dt>${l}</dt><dd>${v}</dd>`).join('')+'</dl>';
     const p2=K.prog==='B';
-    h=`<div class="p-head"><h1>${p2?'Mana izvēle pēc 9. klases':'Mans karjeras kompass'}</h1><div>${who}</div></div>
+    h=`<div class="p-head"><h1>${p2?'Mana izvēle pēc 9. klases':'Mans karjeras kompass'}</h1><div>${whoS}</div></div>
       ${p2?'':`<div class="p-cols">
         <div class="p-sec"><h2>Mana vizītkarte</h2>${dl([['Īpašības',V(S.ipasibas)],['Prasmes',V(S.prasmes)],['Priekšmeti, kas padodas',V(S.padodasT)],['Loma grupā',V(S.lomaG)],['Brīvajā laikā',V(S.brivais)],['Mans moto',V(S.moto)]])}</div>
         <div class="p-sec"><h2>Manas intereses</h2>${(()=>{const r=riScore(),sk=skLists();
@@ -2600,9 +2603,9 @@ function printDoc(kind){
       ${majasBloks(false)?`<div class="p-sec"><h2>Manas atbildes pēc konsultācijas</h2>${majasBloks(false)}</div>`:''}
       <div class="p-cols">
         ${soli.length?`<div class="p-sec"><h2>Mani nākamie soļi</h2>${soli.map(s=>`<div style="padding:2px 0"><span class="cb"></span>${esc(s.t)}</div>`).join('')}</div>`:''}
-        ${res.length||linkList2().length?`<div class="p-sec p-link"><h2>Noderīgas saites</h2><ul>${[...linkList2(),...res].map(r=>`<li>${r.u?`<a href="${esc(r.u)}">${esc(r.n)}</a><br><span style="font-size:9pt">${esc(r.u)}</span>`:esc(r.n)}</li>`).join('')}</ul></div>`:''}
+        ${res.length||linkList2().length?`<div class="p-sec p-link"><h2>Noderīgas saites</h2><ul>${[...linkList2(),...res].map(r=>`<li>${r.u?`<a href="${esc(r.u)}">${esc(r.n)}</a>`:esc(r.n)}</li>`).join('')}</ul></div>`:''}
       </div>
-      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}<br>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</div>`;
+      <div class="p-foot">Konsultāciju vadīja: ${kons||'—'}</div>`;
     }else{
     h=`<div class="p-head"><h1>Individuālā karjeras konsultācija</h1><div>${who}</div><div>Programma: ${esc(PROG[K.prog].n)}</div></div>`+
       STEPS.slice(0,STEPS.length-1).map(s=>{const n=R.P.notes[s.id];return `<div class="p-sec"><h2>${esc(s.t)}</h2>${dlHTML(s.id)}${has(n)?`<div class="p-notes"><b>Piezīmes:</b> ${nl(n)}</div>`:''}</div>`;}).join('')+
