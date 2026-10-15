@@ -158,6 +158,7 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
 .osm-pin.g1{background:#8E6BC0}
 .osm-pin.g2{background:#5E9469}
 .osm-pin.g3{background:#C79A2E}
+.osm-pin.rz{background:#6B7684}
 .osm-avots{position:absolute;right:0;bottom:0;background:rgba(255,255,255,.82);font-size:10.5px;color:#444;padding:1px 6px;border-radius:4px 0 0 0}
 .osm-legenda{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}
 .osm-leg{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--navy)}
@@ -166,8 +167,11 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
 .osm-nr.g1{background:#8E6BC0}
 .osm-nr.g2{background:#5E9469}
 .osm-nr.g3{background:#C79A2E}
+.osm-nr.rz{background:#6B7684}
 .osm-brid{color:#6B7684}
-@media print{.osm-brid{display:none}}
+@media print{.osm-brid{display:none}
+  /* Karte un tās leģenda paliek kopā uz vienas lapas */
+  .osmbox{break-inside:avoid;page-break-inside:avoid}}
 .osm-vad{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
 .osm-lim{font-size:12.5px;font-weight:600;color:var(--navy)}
 @media print{.osm-vad{display:none}}
@@ -1191,10 +1195,10 @@ function salidzTable(forStudent){
   const cols=salidzCols();
   if(!cols.length)return '';
   const g=cols.filter(o=>o.i<3), r=cols.filter(o=>o.i>=3);
-  // Karte nāk uzreiz aiz galvenajām iestādēm; rezerves kartē neatzīmē
+  // Katrai tabulai sava karte uzreiz aiz tās
   return cmpTable(g,forStudent,'Galvenās iestādes',false)
-       + osmKarte()
-       + (r.length?cmpTable(r,forStudent,'Rezerves varianti',true):'');
+       + osmKarte('g')
+       + (r.length?cmpTable(r,forStudent,'Rezerves varianti',true)+osmKarte('r'):'');
 }
 function iestIn(){
   const n=R.K.iest.length;
@@ -1210,10 +1214,10 @@ function iestIn(){
     <div class="iestzim">${i<3?'Galvenā':'Rezerves variants'}</div>
     <div class="grid2" style="gap:10px">
       ${IEST_LAUKI.map(([f,l])=>`<div class="${f==='n'?'span2 iestnos':((f==='bonusi'||f==='persp')?'span2':'')}">${fld(l,'K.iest.'+i+'.'+f,{area:1,rows:platie[f]||2})}</div>`).join('')}
-      ${i<3?`<div class="span2">${fld('Atrašanās vieta kartē','K.iest.'+i+'.geo',{ph:'Ielīmē Google Maps saiti vai koordinātas, piemēram: 56.9496, 24.1052',
-        hint:'Atver vietu Google kartēs un nokopē saiti no adreses joslas. Saīsinātā maps.app.goo.gl saite neder.'})}</div>`:''}
-    </div></div>${i===2?`<div id="osmBox">${osmKarte()}</div>`:''}`).join('')+
-    `${n<3?`<div id="osmBox">${osmKarte()}</div>`:''}
+      <div class="span2">${fld('Atrašanās vieta kartē','K.iest.'+i+'.geo',{ph:'Ielīmē Google Maps saiti vai koordinātas, piemēram: 56.9496, 24.1052',
+        hint:'Atver vietu Google kartēs un nokopē saiti no adreses joslas. Saīsinātā maps.app.goo.gl saite neder.'})}</div>
+    </div></div>${i===2?`<div id="osmBox">${osmKarte('g')}</div>`:''}${i===n-1&&n>3?`<div id="osmBoxR">${osmKarte('r')}</div>`:''}`).join('')+
+    `${n<3?`<div id="osmBox">${osmKarte('g')}</div>`:''}
      <button type="button" class="btn" data-act="iestadd">Pievienot iestādi</button>
      <p class="hint">Pirmās trīs ir galvenās — tās, kas skolēnam der vislabāk. Pārējās ir rezerves varianti. Secību maini ar bultiņām.</p>`;
 }
@@ -1241,8 +1245,12 @@ function lonPx(lon,z){return (lon+180)/360*Math.pow(2,z)*OSM_TILE;}
 function latPx(lat,z){const r=lat*Math.PI/180;
   return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z)*OSM_TILE;}
 // Izvēlas tālummaiņu, kurā visas atzīmes ietilpst kartes laukā ar rezervi malās.
-function osmZoom(pts){
-  if(R.K.osmZ)return R.K.osmZ;
+// Divas kartes: 'g' — galvenās iestādes, 'r' — rezerves varianti. Katrai sava tālummaiņa.
+function osmZKey(kind){return kind==='r'?'osmZR':'osmZ';}
+function osmCols(kind){return salidzCols().filter(o=>kind==='r'?o.i>=3:o.i<3);}
+function osmZoom(pts,kind){
+  const sv=R.K[osmZKey(kind)];
+  if(sv)return sv;
   if(pts.length<2)return 13;
   for(let z=17;z>=3;z--){
     const xs=pts.map(p=>lonPx(p.lon,z)),ys=pts.map(p=>latPx(p.lat,z));
@@ -1250,8 +1258,12 @@ function osmZoom(pts){
   }
   return 3;
 }
-function osmKarte(){
-  const cols=salidzCols().filter(o=>o.i<3);
+function osmKarte(kind){
+  kind=kind==='r'?'r':'g';
+  const rez=kind==='r';
+  const virsr=rez?'Kur atrodas rezerves varianti':'Kur atrodas ieteiktās iestādes';
+  const pinKl=x=>rez?'rz':('g'+(x.i+1));
+  const cols=osmCols(kind);
   if(!cols.length)return '';
   const ar=cols.map(o=>({n:o.x.n||('Iestāde '+(o.i+1)),i:o.i,g:parseGeo(o.x.geo),cels:o.x.cels||''}));
   const ok=ar.filter(x=>x.g&&x.g.lat!==undefined);
@@ -1259,11 +1271,11 @@ function osmKarte(){
   const tuksi=ar.filter(x=>!x.g&&x.n);
   if(!ok.length){
     if(ROLE!=='konsultants')return '';
-    return `<div class="osmbox"><h3>Karte</h3>
+    return `<div class="osmbox"><h3>${rez?'Rezerves variantu karte':'Karte'}</h3>
       <p class="hint">Karte parādīsies, tiklīdz pie iestādes ielīmēsi Google Maps saiti vai koordinātas.</p>
       ${isa.length?`<p class="hint" style="color:#B4521E">Saīsinātā saite (maps.app.goo.gl) neder — atver to pārlūkā un nokopē garo saiti: ${isa.map(x=>esc(x.n)).join(', ')}.</p>`:''}</div>`;
   }
-  const z=osmZoom(ok.map(x=>x.g));
+  const z=osmZoom(ok.map(x=>x.g),kind);
   const xs=ok.map(x=>lonPx(x.g.lon,z)),ys=ok.map(x=>latPx(x.g.lat,z));
   const cx=(Math.max(...xs)+Math.min(...xs))/2, cy=(Math.max(...ys)+Math.min(...ys))/2;
   const left=cx-OSM_W/2, top=cy-OSM_H/2;
@@ -1278,15 +1290,15 @@ function osmKarte(){
       onerror="this.style.display='none'"
       style="left:${Math.round(tx*OSM_TILE-left)}px;top:${Math.round(ty*OSM_TILE-top)}px">`;
   }
-  const pins=ok.map((x,k)=>`<span class="osm-pin g${x.i+1}" style="left:${Math.round(lonPx(x.g.lon,z)-left)}px;top:${Math.round(latPx(x.g.lat,z)-top)}px" title="${esc(x.n)}">${x.i+1}</span>`).join('');
-  const leg=ok.map(x=>`<span class="osm-leg"><span class="osm-nr g${x.i+1}">${x.i+1}</span>${esc(x.n)}</span>`).join('');
+  const pins=ok.map((x,k)=>`<span class="osm-pin ${pinKl(x)}" style="left:${Math.round(lonPx(x.g.lon,z)-left)}px;top:${Math.round(latPx(x.g.lat,z)-top)}px" title="${esc(x.n)}">${x.i+1}</span>`).join('');
+  const leg=ok.map(x=>`<span class="osm-leg"><span class="osm-nr ${pinKl(x)}">${x.i+1}</span>${esc(x.n)}</span>`).join('');
   const vad=(ROLE==='konsultants'&&!PRINTING)?`<div class="osm-vad">
-      <button type="button" class="btn small" data-act="osmz" data-v="-1" ${z<=3?'disabled':''}>−</button>
+      <button type="button" class="btn small" data-act="osmz" data-k="${kind}" data-v="-1" ${z<=3?'disabled':''}>−</button>
       <span class="osm-lim">Tuvinājums ${z}</span>
-      <button type="button" class="btn small" data-act="osmz" data-v="1" ${z>=18?'disabled':''}>+</button>
-      ${R.K.osmZ?'<button type="button" class="btn small" data-act="osmz" data-v="0">Automātiski</button>':''}
+      <button type="button" class="btn small" data-act="osmz" data-k="${kind}" data-v="1" ${z>=18?'disabled':''}>+</button>
+      ${R.K[osmZKey(kind)]?`<button type="button" class="btn small" data-act="osmz" data-k="${kind}" data-v="0">Automātiski</button>`:''}
       <span class="hint" style="margin:0">Šis skats nonāks arī PDF.</span></div>`:'';
-  return `<div class="osmbox"><h3>Kur atrodas ieteiktās iestādes</h3>${vad}
+  return `<div class="osmbox"><h3>${virsr}</h3>${vad}
     <div class="osm-karte" style="width:${OSM_W}px;height:${OSM_H}px">${flizes}${pins}
       <span class="osm-avots">© OpenStreetMap</span></div>
     <div class="osm-legenda">${leg}</div>
@@ -1551,8 +1563,7 @@ const SVIEW = {
     return `<p class="lead">Šīs iestādes izvēlējāmies pēc kritērijiem, kurus Tu nosauci pirmajā reizē. Apskati tās un pie katras atzīmē savu vērtējumu.</p>
       ${kritTop().length?`<div class="hints"><b>Tev svarīgi:</b> ${kritTop().map(x=>`<span class="v">${esc(x)}</span>`).join('')}</div>`:''}
       ${l.yes.length?`<div class="hints" style="margin-top:8px"><b>Profesijas, ko atzīmēji:</b> ${l.yes.map(x=>`<span class="v">${esc(x)}</span>`).join('')} Pārbaudi, vai iestāde sagatavo tieši šīm profesijām.</div>`:''}
-      <div data-w="S.iestV">${salidzTable(true)}</div>
-      ${celsKarte()}`;
+      <div data-w="S.iestV">${salidzTable(true)}</div>`;
   },
   saubas:()=>`
     <p class="lead">Pirms izvēles pierakstīsim to, kas vēl nav skaidrs. Atzīmē no saraksta vai ieraksti savu variantu.</p>
@@ -2146,7 +2157,8 @@ function queue(kind){clearTimeout(sendT[kind]);sendT[kind]=setTimeout(()=>send(
 
 let osmT=null;
 function osmRefresh(){clearTimeout(osmT);osmT=setTimeout(()=>{
-  const b=$('#osmBox');if(b)b.outerHTML=`<div id="osmBox">${osmKarte()}</div>`;
+  const b=$('#osmBox');if(b)b.outerHTML=`<div id="osmBox">${osmKarte('g')}</div>`;
+  const br=$('#osmBoxR');if(br)br.outerHTML=`<div id="osmBoxR">${osmKarte('r')}</div>`;
   const m=$('#kmir');if(m&&ROLE==='konsultants'&&STEPS[STEP].id==='salidz'&&SVIEW.salidz)m.innerHTML=SVIEW.salidz();
 },700);}
 document.addEventListener('input',e=>{
@@ -2231,11 +2243,12 @@ document.addEventListener('click',e=>{
     case 'soli':R.K.soli[+b.dataset.i].on=b.checked;changed('K.');break;
     case 'soliadd':{const inp=b.parentElement.querySelector('input');const v=inp.value.trim();
       if(v){R.K.soli.push({t:v,on:true});document.querySelector('[data-w="K.soli"]').innerHTML=soliIn();changed('K.');}break;}
-    case 'osmz':{const v=+b.dataset.v;
-      if(v===0)R.K.osmZ=null;
-      else{const cur=R.K.osmZ||osmZoom(salidzCols().filter(o=>o.i<3).map(o=>parseGeo(o.x.geo)).filter(g=>g&&g.lat!==undefined));
-        R.K.osmZ=Math.max(3,Math.min(18,cur+v));}
-      const bx=$('#osmBox');if(bx)bx.outerHTML=`<div id="osmBox">${osmKarte()}</div>`;
+    case 'osmz':{const v=+b.dataset.v, kd=b.dataset.k==='r'?'r':'g', kk=osmZKey(kd);
+      if(v===0)R.K[kk]=null;
+      else{const cur=R.K[kk]||osmZoom(osmCols(kd).map(o=>parseGeo(o.x.geo)).filter(g=>g&&g.lat!==undefined),kd);
+        R.K[kk]=Math.max(3,Math.min(18,cur+v));}
+      const id=kd==='r'?'osmBoxR':'osmBox';
+      const bx=$('#'+id);if(bx)bx.outerHTML=`<div id="${id}">${osmKarte(kd)}</div>`;
       queue('k');break;}
     case 'iestadd':{R.K.iest.push(tuksaIest());const bx=$('#iestBox');if(bx)bx.innerHTML=iestIn();osmRefresh();queue('i');break;}
     case 'iestup':
@@ -2598,7 +2611,6 @@ function printDoc(kind){
         ${meklRows().length?`<dl>${meklRows().map(([q,a])=>`<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('')}</dl>`:''}
         ${dl([['Kas mani uztrauc',V(S.skersli)],['Iestādes, par kurām gribu uzzināt vairāk',V(S.iestJaut)]])}</div>`:''}
       ${salidzTable(false)?`<div class="p-sec"><h2>Ieteicamās mācību iestādes</h2>${salidzTable(false)}</div>`:''}
-      ${celsKarte()?`<div class="p-sec">${celsKarte()}</div>`:''}
       ${recoForPdf().length?`<div class="p-sec"><h2>Konsultanta ieteikumi</h2><div class="p-box">${dl(recoForPdf())}</div></div>`:''}
       ${majasBloks(false)?`<div class="p-sec"><h2>Manas atbildes pēc konsultācijas</h2>${majasBloks(false)}</div>`:''}
       <div class="p-cols">
