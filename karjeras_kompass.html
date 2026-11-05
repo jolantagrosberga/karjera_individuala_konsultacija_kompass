@@ -328,7 +328,11 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
   .p-head{background:var(--navy) !important;color:#fff;padding:10px 14px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .p-head h1{color:#fff;font-size:18pt}
   .p-head div{font-size:10.5pt;margin-top:2px}
-  .p-sec{margin-top:10px;break-inside:avoid}
+  .p-sec{margin-top:8px;break-inside:avoid}
+  /* Drukā kartes logs kompaktāks, lai lapa nepārlūst otrā */
+  .osmbox{padding:8px 10px;margin-top:8px}
+  .osmbox h3{margin-bottom:5px}
+  .osm-legenda{margin-top:6px;gap:4px 14px}
   .p-sec h2{font-size:13pt;border-bottom:2px solid var(--orange);padding-bottom:2px;margin-bottom:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .p-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
   .p-sec dl{display:grid;grid-template-columns:36mm 1fr;margin:0}
@@ -339,12 +343,17 @@ dl.mekl dd{margin:0;font-weight:600;color:var(--navy);font-size:14px}
   .v{background:none !important;padding:0;margin:0;display:inline}
   .v::after{content:",\00a0"}
   .v:last-child::after{content:""}
-  .p-foot{margin-top:14px;font-size:9pt;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
+  .p-foot{margin-top:8px;font-size:9pt;color:var(--muted);border-top:1px solid var(--line);padding-top:4px;break-before:avoid;page-break-before:avoid}
   .p-notes{background:#FFF6EE !important;border-left:3px solid var(--orange);padding:4px 8px;margin-top:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cb{display:inline-block;width:10pt;height:10pt;border:1.2px solid var(--ink);margin-right:6px;vertical-align:-1pt}
   a{color:var(--ink);text-decoration:none}
   .p-link a{color:#1F4E79;text-decoration:underline}
+  /* Tabula drīkst turpināties nākamajā lapā (galvene atkārtojas), bet rinda nepārlūst */
   .cmpwrap{border:0;margin-bottom:8px;overflow:visible}
+  table.cmp tr{break-inside:avoid;page-break-inside:avoid}
+  table.cmp thead{display:table-header-group}
+  /* Iestāžu sadaļa drīkst turpināties nākamajā lapā, lai pirms tās nepaliek tukša puslapa */
+  .p-sec.p-flow{break-inside:auto;page-break-inside:auto}
   .cmphead{background:#F4EAE0 !important;color:#1F4E79;font-size:9.5pt;font-weight:700;padding:3px 6px;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cmpwrap.rez .cmphead{background:#EDEFF2 !important;color:#44505C}
@@ -1176,6 +1185,14 @@ function mitiScore(){
 }
 function salidzCols(){return (R.K.iest||[]).map((x,i)=>({i,x})).filter(o=>has(o.x));}
 // Viena tabula. Kolonnu platumu nosaka procentos, lai tabula vienmēr ietilptu logā.
+// Drukājot rāda tikai tās rindas, kurās kaut kas ir ierakstīts, lai PDF nav tukšu rindu.
+// Ekrānā rindas paliek visas — tās norāda, par ko vēl vērts painteresēties.
+function cmpRindas(cols){
+  const v=IEST_LAUKI.slice(1);
+  if(!PRINTING)return v;
+  const r=v.filter(([f])=>cols.some(o=>has(o.x[f])));
+  return r.length?r:v.slice(0,1);
+}
 function cmpTable(cols,forStudent,virsr,rez){
   if(!cols.length)return '';
   const w=(78/cols.length).toFixed(2);
@@ -1184,7 +1201,7 @@ function cmpTable(cols,forStudent,virsr,rez){
     <table class="cmp">
     <colgroup><col style="width:22%">${cols.map(()=>`<col style="width:${w}%">`).join('')}</colgroup>
     <thead><tr><th></th>${cols.map(o=>`<th>${esc(o.x.n||('Iestāde '+(o.i+1)))}</th>`).join('')}</tr></thead><tbody>
-    ${IEST_LAUKI.slice(1).map(([f,l])=>`<tr><th>${esc(l)}</th>${cols.map(o=>`<td>${f==='saite'&&o.x[f]?`<a href="${esc(o.x[f])}" target="_blank" rel="noopener">${esc(o.x[f])}</a>`:nl(o.x[f]||'')||'<span class="empty">—</span>'}</td>`).join('')}</tr>`).join('')}
+    ${cmpRindas(cols).map(([f,l])=>`<tr><th>${esc(l)}</th>${cols.map(o=>`<td>${f==='saite'&&o.x[f]?`<a href="${esc(o.x[f])}" target="_blank" rel="noopener">${esc(o.x[f])}</a>`:nl(o.x[f]||'')||'<span class="empty">—</span>'}</td>`).join('')}</tr>`).join('')}
     ${(!forStudent&&cols.some(o=>R.S.iestV[o.i]))?`<tr><th>Skolēna vērtējums</th>${cols.map(o=>{const v=R.S.iestV[o.i]||'';
       return `<td>${v?`<span class="v ${v==='p'?'g':v==='n'?'r':''}">${v==='p'?'Patīk':v==='x'?'Vēl nezinu':'Nepatīk'}</span>`:'<span class="empty">—</span>'}</td>`;}).join('')}</tr>`:''}
     ${(!forStudent&&cols.some(o=>has(R.S.iestQ[o.i])))?`<tr><th>Skolēna jautājums</th>${cols.map(o=>`<td>${nl(R.S.iestQ[o.i]||'')||'<span class="empty">—</span>'}</td>`).join('')}</tr>`:''}
@@ -2610,7 +2627,7 @@ function printDoc(kind){
         ${dl([['Izglītības ceļš',V(celiNames())],['Ļoti svarīgi',V(kritTop())],['Vidēji svarīgi',V(kritMid())]])}
         ${meklRows().length?`<dl>${meklRows().map(([q,a])=>`<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('')}</dl>`:''}
         ${dl([['Kas mani uztrauc',V(S.skersli)],['Iestādes, par kurām gribu uzzināt vairāk',V(S.iestJaut)]])}</div>`:''}
-      ${salidzTable(false)?`<div class="p-sec"><h2>Ieteicamās mācību iestādes</h2>${salidzTable(false)}</div>`:''}
+      ${salidzTable(false)?`<div class="p-sec p-flow"><h2>Ieteicamās mācību iestādes</h2>${salidzTable(false)}</div>`:''}
       ${recoForPdf().length?`<div class="p-sec"><h2>Konsultanta ieteikumi</h2><div class="p-box">${dl(recoForPdf())}</div></div>`:''}
       ${majasBloks(false)?`<div class="p-sec"><h2>Manas atbildes pēc konsultācijas</h2>${majasBloks(false)}</div>`:''}
       <div class="p-cols">
