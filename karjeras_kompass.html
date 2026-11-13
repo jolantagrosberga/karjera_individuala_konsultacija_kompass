@@ -426,6 +426,8 @@ body{display:flex;flex-direction:column;overflow:hidden}
 main{overflow-y:auto;height:100%;width:100%}
 .credit{flex:none;background:#fff;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;padding:5px 20px;text-align:right}
 @media (max-width:900px){body{overflow:auto}#app{overflow:visible}main{height:auto}}
+/* Versijas zīmīte — ļauj pārbaudīt, vai pārlūks ielādējis jauno failu, nevis veco no kešatmiņas */
+.versija{float:left;font-size:11.5px;color:#9AA3AE;letter-spacing:.3px;cursor:default}
 @media print{.credit{display:none}}
 </style>
 </head>
@@ -512,7 +514,7 @@ main{overflow-y:auto;height:100%;width:100%}
 </div>
 
 <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
-<footer class="credit">Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</footer>
+<footer class="credit"><span class="versija" id="versija" title="Rīka versija. Ja šeit ir vecāks datums, nospied Ctrl+F5.">v2026-11-13</span>Autore Jaunmārupes pamatskolas pedagoģe-karjeras konsultante Jolanta Grosberga-Gernere</footer>
 <style id="pageStyle">@page{size:A4 portrait;margin:13mm 14mm}</style>
 <div id="print"></div>
 
