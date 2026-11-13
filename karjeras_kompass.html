@@ -869,6 +869,8 @@ let STEP = 0;
 let studentStep = 0;
 let follow = true;
 let peer = null, conn = null, CODE = '', retry = 0, retryTimer = null;
+let MEG = 0, PIEVIENOJAS = false;
+const ATKARTO = [1200,2500,4000,6000,8000,10000];
 const WREG = {};
 
 /* ============ Palīgfunkcijas ============ */
@@ -2320,7 +2322,7 @@ document.addEventListener('click',e=>{
 /* ============ Savienojums ============ */
 function setConn(state,text){
   $('#connDot').className='dot'+(state?' '+state:'');$('#connText').textContent=text;
-  $('#btnReconnect').style.display=(ROLE==='skolens'&&MODE==='online'&&state!=='on'&&CODE)?'':'none';
+  $('#btnReconnect').style.display=(((ROLE==='skolens'&&MODE==='online')||PIEVIENOJAS)&&state!=='on'&&CODE)?'':'none';
 }
 function genCode(){const a='ABCDEFGHJKLMNPRSTUVZ23456789';let c='';for(let i=0;i<5;i++)c+=a[Math.floor(Math.random()*a.length)];return c;}
 function peerOk(){return typeof window.Peer==='function';}
@@ -2336,7 +2338,16 @@ function host(){
   peer.on('connection',c=>{if(conn&&conn!==c){try{conn.close();}catch(e){}}conn=c;wire(c);});
   peer.on('disconnected',()=>{setConn('wait','Atjauno savienojumu…');setTimeout(()=>{if(peer&&!peer.destroyed)peer.reconnect();},2000);});
   peer.on('error',err=>{
-    if(err.type==='unavailable-id'){peer.destroy();host();return;}
+    // Ja kods jau redzams uz ekrāna, to vairs nemaina klusībā — citādi skolēns
+    // ievada kodu, kura vairs nav, un neko nesaprot.
+    if(err.type==='unavailable-id'){
+      const redzams=$('#codeWrap').style.display!=='none';
+      try{peer.destroy();}catch(e){}
+      if(!redzams){host();return;}
+      setConn('err','Savienojuma kļūda');
+      $('#hostMsg').textContent='Šis kods vairs nav derīgs. Pārlādē lapu un sāc konsultāciju no jauna, lai saņemtu citu kodu.';
+      return;
+    }
     setConn('err','Savienojuma kļūda');
     $('#hostMsg').textContent='Kļūda: '+err.type+'. Var strādāt bez savienojuma.';
   });
@@ -2345,43 +2356,110 @@ function host(){
 function join(code){
   if(!peerOk()){$('#joinMsg').textContent='Neizdevās ielādēt savienojuma bibliotēku. Pārbaudi interneta savienojumu vai strādā bez savienojuma.';return;}
   CODE=code;
+  clearTimeout(retryTimer);
+  PIEVIENOJAS=true;
+  // Katram mēģinājumam savs numurs, lai vecā mēģinājuma kļūdas vairs neko neizjauc
+  const meg=++MEG, mans=()=>meg===MEG;
   if(peer&&!peer.destroyed){try{peer.destroy();}catch(e){}}
-  peer=new Peer({debug:0});
-  setConn('wait','Savienojas…');
-  const to=setTimeout(()=>{if(!(conn&&conn.open)){fail('Neizdevās savienoties. Pārbaudi kodu.');}},12000);
-  peer.on('open',()=>{const c=peer.connect(PREFIX+code,{reliable:true});conn=c;wire(c,to);});
-  peer.on('error',err=>{clearTimeout(to);fail(err.type==='peer-unavailable'?'Tāds kods netika atrasts. Pārbaudi kodu karjeras konsultantes ekrānā.':'Savienojuma kļūda: '+err.type);});
+  peer=null;conn=null;
+  const p=new Peer({debug:0});
+  peer=p;
+  setConn('wait',retry?'Mēģinu vēlreiz ('+(retry+1)+')…':'Savienojas…');
+  $('#joinMsg').textContent=retry?'Savienojums neizdevās uzreiz. Mēģinu vēlreiz ('+(retry+1)+') — kods nav jāievada no jauna.':'';
+  const to=setTimeout(()=>{if(mans()&&!(conn&&conn.open))fail('Neizdevās savienoties.');},7000);
+  p.on('open',()=>{
+    if(!mans())return;
+    // Īsa pauze: uzreiz pēc atvēršanas veidots savienojums mēdz nekad neatvērties
+    setTimeout(()=>{if(!mans())return;const c=p.connect(PREFIX+code,{reliable:true});conn=c;wire(c,to);},350);
+  });
+  p.on('error',err=>{
+    if(!mans())return;
+    clearTimeout(to);
+    fail(err.type==='peer-unavailable'?'Tāds kods netika atrasts.':'Savienojuma kļūda: '+err.type,err.type);
+  });
 }
-function fail(t){
-  if(ROLE==='skolens'){setConn('err','Nav savienojuma');scheduleRetry();}
-  else{$('#joinMsg').textContent=t;setConn('err','Nav savienojuma');}
+function fail(t,tips){
+  setConn('err','Nav savienojuma');
+  // Pirmajā mēģinājumā ROLE vēl nav uzstādīts, tāpēc jāskatās arī uz PIEVIENOJAS.
+  // Citādi atkārtošana nenotiek un skolēnam kods jāievada ar roku.
+  if(ROLE==='skolens'||PIEVIENOJAS){
+    if(retry>=ATKARTO.length){
+      PIEVIENOJAS=false;
+      $('#joinMsg').textContent=tips==='peer-unavailable'
+        ? 'Tāds kods netika atrasts. Pārbaudi kodu karjeras konsultantes ekrānā un ievadi vēlreiz.'
+        : 'Neizdevās savienoties. Pārbaudi internetu un ievadi kodu vēlreiz.';
+      return;
+    }
+    scheduleRetry();
+  }
+  else $('#joinMsg').textContent=t;
 }
 function scheduleRetry(){
   clearTimeout(retryTimer);
-  if(retry>=10)return;
-  retry++;retryTimer=setTimeout(()=>join(CODE),4000);
+  const ms=ATKARTO[Math.min(retry,ATKARTO.length-1)];
+  retry++;
+  retryTimer=setTimeout(()=>join(CODE),ms);
 }
 function wire(c,to){
   c.on('open',()=>{
-    clearTimeout(to);retry=0;
+    clearTimeout(to);retry=0;PIEVIENOJAS=false;
+    const jm=$('#joinMsg');if(jm)jm.textContent='';
     setConn('on','Savienots');
-    if(ROLE==='skolens'||(!ROLE)){ if(!ROLE)enterApp('skolens','online'); send({t:'hello',s:R.S,n:STEP}); }
-    
+    if(ROLE==='skolens'||(!ROLE)){ if(!ROLE)enterApp('skolens','online'); send({t:'hello',s:R.S,n:STEP}); sakPuksts(); }
   });
   c.on('data',onData);
   c.on('close',()=>{
-    if(conn!==c)return;conn=null;
+    if(conn!==c)return;conn=null;stajPuksts();
     if(ROLE==='skolens'){setConn('err','Savienojums pārtraukts');scheduleRetry();}
     else setConn('wait','Gaida skolēnu');
   });
   c.on('error',()=>{});
 }
-function isEmptyS(s){const a=JSON.parse(JSON.stringify(s));const b=newS();a.datums=b.datums;return JSON.stringify(a)===JSON.stringify(b);}
+/* Mēdz gadīties, ka savienojums skaitās atvērts, bet dati vairs neplūst.
+   Skolēna dators ik pa brīdim pārbauda, vai otra puse vēl atbild. */
+let puksts=null, atbilde=0;
+function sakPuksts(){
+  stajPuksts();atbilde=Date.now();
+  puksts=setInterval(()=>{
+    if(ROLE!=='skolens'||MODE!=='online')return;
+    const dz=conn&&conn.dataChannel&&conn.dataChannel.readyState;
+    if(!conn||!conn.open||(dz&&dz!=='open')||Date.now()-atbilde>26000){
+      stajPuksts();
+      try{if(conn)conn.close();}catch(e){}
+      conn=null;setConn('err','Savienojums pārtraukts');scheduleRetry();
+      return;
+    }
+    send({t:'ping'});
+  },8000);
+}
+function stajPuksts(){if(puksts){clearInterval(puksts);puksts=null;}}
+// Datums, laiks un konsultācijas numurs katrā datorā atšķiras jau pašā sākumā,
+// tāpēc tos nedrīkst ņemt vērā, vērtējot, vai anketa ir tukša.
+const GAISTOSIE=['datums','laiks','nr'];
+// Cik lauku ir aizpildīts. Salīdzina tikai tos laukus, kurus pazīst abas puses,
+// lai atšķirīga rīka versija otrā datorā neizjauktu salīdzinājumu.
+function aizpildito(s){
+  if(!s||typeof s!=='object')return -1;
+  const b=newS();let n=0;
+  for(const k in b){
+    if(GAISTOSIE.indexOf(k)>=0)continue;
+    if(!(k in s))continue;
+    if(JSON.stringify(s[k])!==JSON.stringify(b[k]))n++;
+  }
+  return n;
+}
+function isEmptyS(s){return aizpildito(s)===0;}
 function onData(m){
   if(!m||typeof m!=='object')return;
+  if(m.t==='ping'){send({t:'pong'});return;}
+  if(m.t==='pong'){atbilde=Date.now();return;}
+  atbilde=Date.now();
   if(ROLE==='konsultants'){
     if(m.t==='hello'){
-      if(isEmptyS(m.s)&&!isEmptyS(R.S))send({t:'restore',s:R.S});else{R.S=m.s;}
+      // Uzvar tā puse, kurā ir vairāk aizpildīta. Tā konsultanta ielādētā anketa
+      // vairs nepazūd, kad skolēns pievienojas ar tukšu lapu.
+      if(aizpildito(m.s)>=aizpildito(R.S))R.S=m.s;
+      else send({t:'restore',s:R.S});
       send({t:'prog',v:R.K.prog});send({t:'mod',v:R.K.moduli});send({t:'sum',v:R.K.sum});
       send({t:'iest',v:{on:R.K.iestOn,iest:R.K.iest}});setStudentStep(m.n||0);refreshAns();
     }
@@ -2468,7 +2546,7 @@ $('#btnConsOffline').onclick=()=>showProgStep('offline');
 $('#btnStudentOffline').onclick=()=>enterApp('skolens','offline');
 $('#btnJoin').onclick=()=>{const c=$('#joinCode').value.trim().toUpperCase();if(c.length!==5){$('#joinMsg').textContent='Kodā jābūt piecām zīmēm.';return;}$('#joinMsg').textContent='';join(c);};
 $('#joinCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('#btnJoin').click();});
-$('#btnReconnect').onclick=()=>{retry=0;join(CODE);};
+$('#btnReconnect').onclick=()=>{retry=0;PIEVIENOJAS=true;join(CODE);};
 $('#btnSwitch').onclick=()=>{
   if(ROLE==='skolens'){if(!confirm('Pāriet uz konsultanta skatu šajā datorā?'))return;ROLE='konsultants';}
   else ROLE='skolens';
@@ -2662,6 +2740,9 @@ function printDoc(kind){
 
 /* ============ Brīdinājums pirms aizvēršanas ============ */
 window.addEventListener('beforeunload',e=>{if(ROLE&&!isEmptyS(R.S)){e.preventDefault();e.returnValue='';}});
+// Aizverot lapu, kods uzreiz jāatbrīvo. Citādi serverī paliek "spoku" pieslēgums,
+// kas aizņem veco kodu līdz pusotrai minūtei un neļauj tam pašam kodam strādāt no jauna.
+window.addEventListener('pagehide',()=>{try{if(peer&&!peer.destroyed)peer.destroy();}catch(e){}});
 </script>
 </body>
 </html>
